@@ -23,16 +23,16 @@ function App() {
   const [authenticated, setAuthenticated] = useState(true);
 
   const handleLogin = () => {
-      // Toggle the authenticated state
-      setAuthenticated(authenticated => !authenticated);
+    // Toggle the authenticated state
+    setAuthenticated((authenticated) => !authenticated);
   };
 
   return (
-      <ColorModeContext.Provider value={colorMode}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {authenticated ? (
-            <div className="app">
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {authenticated ? (
+          <div className="app">
             <Sidebar onLogin={handleLogin} />
             <main className="content">
               <Topbar />
@@ -51,15 +51,14 @@ function App() {
               </Routes>
             </main>
           </div>
-          ): (
-              <Routes>
-                <Route path="/" element={<Signin onLogin={handleLogin} />} />
-                <Route path="/signup" element={<SignUp />} />
-              </Routes>
-          )}
-          
-        </ThemeProvider>
-      </ColorModeContext.Provider>
+        ) : (
+          <Routes>
+            <Route path="/" element={<Signin onLogin={handleLogin} />} />
+            <Route path="/signup" element={<SignUp />} />
+          </Routes>
+        )}
+      </ThemeProvider>
+    </ColorModeContext.Provider>
   );
 }
 
