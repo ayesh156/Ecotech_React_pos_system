@@ -155,8 +155,15 @@ const Sidebar = ({ onLogin }) => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Data
+              Invoices
             </Typography>
+            <Item
+              title="New Invoice"
+              to="/invoices"
+              icon={<ReceiptOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
             <Item
               title="Manage Team"
               to="/team"
@@ -168,13 +175,6 @@ const Sidebar = ({ onLogin }) => {
               title="Contacts Information"
               to="/contacts"
               icon={<ContactsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Invoices Balances"
-              to="/invoices"
-              icon={<ReceiptOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
