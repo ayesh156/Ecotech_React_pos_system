@@ -131,14 +131,17 @@ const Sidebar = ({ onLogin }) => {
 
           {/* MENU ITEMS */}
 
-          <Box onClick={handleSignIn} paddingLeft={isCollapsed ? undefined : "22%"}>
-              <Item
-                title="Logout"
-                to="/"
-                icon={<ExitToAppIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+          <Box
+            onClick={handleSignIn}
+            paddingLeft={isCollapsed ? undefined : "22%"}
+          >
+            <Item
+              title="Logout"
+              to="/"
+              icon={<ExitToAppIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
           </Box>
 
           <Box mb="10px" paddingLeft={isCollapsed ? undefined : "10%"}>
@@ -155,7 +158,7 @@ const Sidebar = ({ onLogin }) => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Invoices
+              {!isCollapsed ? "Invoices" : "Invoi..."}
             </Typography>
             <Item
               title="New Invoice"

@@ -7,6 +7,7 @@ import {
   TextField,
   useMediaQuery,
   Autocomplete,
+  FormHelperText,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
@@ -20,6 +21,12 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
+const data = { names: ["Shawshank", "Chathuranga", "Malaka"] };
 
 const Invoices = () => {
   const theme = useTheme();
@@ -30,6 +37,17 @@ const Invoices = () => {
   const [lastId, setLastId] = useState(0);
   const [open, setOpen] = useState(false);
   const isNonMobile = useMediaQuery("(min-width:600px)");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDueDate, setSelectedDueDate] = useState(null);
+  const [customer, setCustomer] = useState(null);
+  const [isCustomerError, setIsCustomerError] = useState(false);
+  const [isDateError, setIsDateError] = useState(false);
+  const [isDueDateError, setIsDueDateError] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [notes, setNotes] = useState("");
+  const [paymentInstructions, setPaymentInstructions] = useState("");
+  const [footerNotes, setFooterNotes] = useState("");
 
   const handleDeleteRow = (idToDelete) => {
     setGridRows((prevRows) => prevRows.filter((row) => row.id !== idToDelete));
@@ -107,8 +125,70 @@ const Invoices = () => {
     setTotalAmount(sum);
   }, [gridRows]);
 
+  const collectData = () => {
+    // Collect values from Autocomplete
+    const selectedCustomer = customer;
+
+    // Collect values from Datepickers
+    const selectedDateValue = selectedDate
+      ? selectedDate.format("YYYY-MM-DD")
+      : null;
+    const selectedDueDateValue = selectedDueDate
+      ? selectedDueDate.format("YYYY-MM-DD")
+      : null;
+
+    // Collect values from DataGrid rows
+    const productTable = gridRows.map((row) => ({
+      name: row.name,
+      description: row.description,
+      qty: row.qty,
+      price: row.price,
+      tax: row.tax,
+      amount: row.amount,
+    }));
+
+    // Combine all collected values into one object
+    const collectedData = {
+      selectedCustomer,
+      summary,
+      invoiceNumber,
+      notes,
+      paymentInstructions,
+      footerNotes,
+      selectedDate: selectedDateValue,
+      selectedDueDate: selectedDueDateValue,
+      productTable,
+    };
+
+    return collectedData;
+  };
+
   const getDataButtonClick = () => {
-    console.log(gridRows); // Log all the rows
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    const collectedData = collectData();
+    console.log(collectedData);
+
+    // Reset form data
+    setCustomer(null);
+    setIsCustomerError(false);
+    setSelectedDate(null);
+    setIsDateError(false);
+    setSelectedDueDate(null);
+    setIsDueDateError(null);
+    setSummary("");
+    setInvoiceNumber("");
+    setNotes("");
+    setPaymentInstructions("");
+    setFooterNotes("");
+
+    // Clear table rows
+    setGridRows([]);
   };
 
   const [newRow, setNewRow] = useState({
@@ -157,6 +237,7 @@ const Invoices = () => {
       tax: "",
       amount: "",
     });
+
     setLastId(newId);
   };
 
@@ -200,10 +281,113 @@ const Invoices = () => {
   return (
     <Box m="20px">
       <Header title="INVOICES" subtitle="List of Invoice Balances" />
-      <Box m="40px 0 0 0">
-        <Typography>
-          Hi
-        </Typography>
+      <Box
+        m="40px 0 0 0"
+        sx={{ display: "flex", justifyContent: "space-between" }}
+      >
+        <TextField
+          label="Summary"
+          multiline
+          rows={4}
+          color="secondary"
+          sx={{ marginTop: "10px", width: "450px" }}
+          value={summary}
+          onChange={(event) => {
+            setSummary(event.target.value);
+          }}
+        />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
+            <Autocomplete
+              disablePortal
+              id="combo-box-demo"
+              options={data.names}
+              value={customer}
+              onChange={(event, newValue) => {
+                setCustomer(newValue);
+                setIsCustomerError(newValue === null);
+              }}
+              sx={{ width: 230, position: "relative" }}
+              renderInput={(params) => (
+                <>
+                  <TextField {...params} label="Customer" color="secondary" />
+                  {isCustomerError && (
+                    <FormHelperText
+                      sx={{
+                        color: colors.redAccent[500],
+                        marginLeft: "10px",
+                        position: "absolute", // Set position absolute
+                        bottom: -20, // Adjust this value as needed
+                        left: 0,
+                      }}
+                    >
+                      The customer field is required
+                    </FormHelperText>
+                  )}
+                </>
+              )}
+            />
+            <TextField
+              color="secondary"
+              label="Invoice number"
+              sx={{ alignSelf: "flex-end", width: 230 }}
+              value={invoiceNumber}
+              onChange={(event) => {
+                setInvoiceNumber(event.target.value);
+              }}
+            />
+          </Box>
+          <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DemoContainer components={["DatePicker"]}>
+                <DatePicker
+                  value={selectedDate}
+                  onChange={(newValue) => {
+                    setSelectedDate(newValue);
+                  }}
+                  slotProps={{
+                    textField: () => ({
+                      color: "secondary",
+                      helperText: !selectedDueDate ? (
+                        <span style={{ color: colors.redAccent[500] }}>
+                          {isDateError && "The Date field is required"}
+                        </span>
+                      ) : null,
+                    }),
+                  }}
+                  label="Date"
+                />
+              </DemoContainer>
+            </LocalizationProvider>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DemoContainer components={["DatePicker"]}>
+                <DatePicker
+                  value={selectedDueDate}
+                  onChange={(newValue) => {
+                    setSelectedDueDate(newValue);
+                  }}
+                  slotProps={{
+                    textField: () => ({
+                      color: "secondary",
+                      helperText: !selectedDate ? (
+                        <span style={{ color: colors.redAccent[500] }}>
+                          {isDueDateError && "The Due Date field is required"}
+                        </span>
+                      ) : null,
+                    }),
+                  }}
+                  label="Payment due date"
+                />
+              </DemoContainer>
+            </LocalizationProvider>
+          </Box>
+        </Box>
       </Box>
 
       <Box m="40px 0 0 0" height="75vh">
@@ -245,9 +429,6 @@ const Invoices = () => {
                         color="secondary"
                         sx={{
                           width: "200px",
-                          "& .MuiInputLabel-root.Mui-focused": {
-                            color: colors.primary[100],
-                          },
                         }}
                       />
                     )}
@@ -277,15 +458,6 @@ const Invoices = () => {
                     value={value}
                     sx={{
                       width: fieldName === "description" ? "400px" : "auto",
-                      "& .MuiInputLabel-root.Mui-focused": {
-                        color: colors.primary[100],
-                      },
-                      border: "1px",
-                      "& .MuiOutlinedInput-root:hover": {
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: colors.primary[200],
-                        },
-                      },
                     }}
                     onChange={(e) => {
                       const { name, value } = e.target;
@@ -363,7 +535,52 @@ const Invoices = () => {
             <Typography variant="h5">LKR {totalAmount.toFixed(2)}</Typography>
           </Box>
         </Box>
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Box
+          sx={{ display: "flex", justifyContent: "space-between", gap: "20px" }}
+        >
+          <TextField
+            label="Notes"
+            multiline
+            rows={4}
+            color="secondary"
+            fullWidth
+            sx={{ marginTop: "10px" }}
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+            }}
+          />
+          <TextField
+            label="Payment Instructions"
+            multiline
+            rows={4}
+            color="secondary"
+            fullWidth
+            sx={{ marginTop: "10px" }}
+            value={paymentInstructions}
+            onChange={(event) => {
+              setPaymentInstructions(event.target.value);
+            }}
+          />
+        </Box>
+        <Box
+          mt={5}
+          pb={4}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: "100px",
+          }}
+        >
+          <TextField
+            fullWidth
+            color="secondary"
+            label="Add footer notes"
+            value={footerNotes}
+            onChange={(event) => {
+              setFooterNotes(event.target.value);
+            }}
+          />
           <Button
             onClick={getDataButtonClick}
             sx={{
@@ -389,93 +606,95 @@ const Invoices = () => {
           <DialogTitle fontSize={16}>{"Edit Selected Product"}</DialogTitle>
           {selectedRow && (
             <DialogContent>
-            <Box
-              maxWidth="400px"
-              sx={{
-                "& > div": {
-                  gridColumn: isNonMobile ? undefined : "span 4",
-                },
-              }}
-            >
               <Box
+                maxWidth="400px"
                 sx={{
-                  display: isNonMobile ? "flex" : undefined,
-                  gap: isNonMobile ? "20px" : undefined,
-                  marginTop: "15px",
+                  "& > div": {
+                    gridColumn: isNonMobile ? undefined : "span 4",
+                  },
                 }}
               >
+                <Box
+                  sx={{
+                    display: isNonMobile ? "flex" : undefined,
+                    gap: isNonMobile ? "20px" : undefined,
+                    marginTop: "15px",
+                  }}
+                >
+                  <TextField
+                    label="Name"
+                    color="secondary"
+                    value={selectedRow.name}
+                    onChange={(e) =>
+                      setSelectedRow({ ...selectedRow, name: e.target.value })
+                    }
+                  />
+                  <TextField
+                    label="Quantity"
+                    color="secondary"
+                    value={selectedRow.qty}
+                    type="number"
+                    onChange={(e) => {
+                      const newValue = parseFloat(e.target.value);
+                      setSelectedRow({
+                        ...selectedRow,
+                        qty: isNaN(newValue) || newValue < 0 ? 0 : newValue,
+                      });
+                    }}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: isNonMobile ? "flex" : undefined,
+                    gap: isNonMobile ? "20px" : undefined,
+                    marginTop: "15px",
+                  }}
+                >
+                  <TextField
+                    label="Price (Rs.)"
+                    color="secondary"
+                    type="number"
+                    value={selectedRow.price}
+                    onChange={(e) => {
+                      const newValue = parseFloat(e.target.value);
+                      setSelectedRow({
+                        ...selectedRow,
+                        price: isNaN(newValue) || newValue < 0 ? 0 : newValue,
+                      });
+                    }}
+                  />
+                  <TextField
+                    label="Tax (%)"
+                    color="secondary"
+                    type="number"
+                    value={selectedRow.tax}
+                    onChange={(e) => {
+                      const newValue = parseFloat(e.target.value);
+                      setSelectedRow({
+                        ...selectedRow,
+                        tax: isNaN(newValue) || newValue < 0 ? 0 : newValue,
+                      });
+                    }}
+                  />
+                </Box>
                 <TextField
-                  label="Name"
+                  label="Description"
                   color="secondary"
-                  value={selectedRow.name}
+                  value={selectedRow.description}
+                  sx={{
+                    display: isNonMobile ? "flex" : undefined,
+                    gap: isNonMobile ? "20px" : undefined,
+                    marginTop: "15px",
+                  }}
                   onChange={(e) =>
-                    setSelectedRow({ ...selectedRow, name: e.target.value })
+                    setSelectedRow({
+                      ...selectedRow,
+                      description: e.target.value,
+                    })
                   }
                 />
-                <TextField
-                  label="Quantity"
-                  color="secondary"
-                  value={selectedRow.qty}
-                  onChange={(e) => {
-                    const newValue = parseFloat(e.target.value);
-                    setSelectedRow({
-                      ...selectedRow,
-                      qty: isNaN(newValue) || newValue < 0 ? 0 : newValue,
-                    });
-                  }}
-                />
               </Box>
-              <Box
-                sx={{
-                  display: isNonMobile ? "flex" : undefined,
-                  gap: isNonMobile ? "20px" : undefined,
-                  marginTop: "15px",
-                }}
-              >
-                <TextField
-                  label="Price (Rs.)"
-                  color="secondary"
-                  value={selectedRow.price}
-                  onChange={(e) => {
-                    const newValue = parseFloat(e.target.value);
-                    setSelectedRow({
-                      ...selectedRow,
-                      price: isNaN(newValue) || newValue < 0 ? 0 : newValue,
-                    });
-                  }}
-                />
-                <TextField
-                  label="Tax (%)"
-                  color="secondary"
-                  value={selectedRow.tax}
-                  onChange={(e) => {
-                    const newValue = parseFloat(e.target.value);
-                    setSelectedRow({
-                      ...selectedRow,
-                      tax: isNaN(newValue) || newValue < 0 ? 0 : newValue,
-                    });
-                  }}
-                />
-              </Box>
-              <TextField
-                label="Description"
-                color="secondary"
-                value={selectedRow.description}
-                sx={{
-                  display: isNonMobile ? "flex" : undefined,
-                  gap: isNonMobile ? "20px" : undefined,
-                  marginTop: "15px",
-                }}
-                onChange={(e) =>
-                  setSelectedRow({
-                    ...selectedRow,
-                    description: e.target.value,
-                  })
-                }
-              />
-            </Box>
-          </DialogContent>
-          
+            </DialogContent>
           )}
           <DialogActions>
             <Button onClick={handleClose} sx={{ color: colors.primary[100] }}>
