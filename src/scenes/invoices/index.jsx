@@ -25,6 +25,8 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import LoadingButton from '@mui/lab/LoadingButton';
+import SendIcon from '@mui/icons-material/Send';
 
 const data = { names: ["Shawshank", "Chathuranga", "Malaka"] };
 
@@ -48,6 +50,7 @@ const Invoices = () => {
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDeleteRow = (idToDelete) => {
     setGridRows((prevRows) => prevRows.filter((row) => row.id !== idToDelete));
@@ -171,24 +174,28 @@ const Invoices = () => {
       return;
     }
 
-    const collectedData = collectData();
-    console.log(collectedData);
+    setIsLoading(true);
+    setTimeout(() => {
+      const collectedData = collectData();
+      console.log(collectedData);
 
-    // Reset form data
-    setCustomer(null);
-    setIsCustomerError(false);
-    setSelectedDate(null);
-    setIsDateError(false);
-    setSelectedDueDate(null);
-    setIsDueDateError(null);
-    setSummary("");
-    setInvoiceNumber("");
-    setNotes("");
-    setPaymentInstructions("");
-    setFooterNotes("");
+      // Reset form data
+      setCustomer(null);
+      setIsCustomerError(false);
+      setSelectedDate(null);
+      setIsDateError(false);
+      setSelectedDueDate(null);
+      setIsDueDateError(null);
+      setSummary("");
+      setInvoiceNumber("");
+      setNotes("");
+      setPaymentInstructions("");
+      setFooterNotes("");
 
-    // Clear table rows
-    setGridRows([]);
+      // Clear table rows
+      setGridRows([]);
+      setIsLoading(false);
+    }, 1000); // Change the timeout value as needed
   };
 
   const [newRow, setNewRow] = useState({
@@ -581,7 +588,11 @@ const Invoices = () => {
               setFooterNotes(event.target.value);
             }}
           />
-          <Button
+          <LoadingButton
+            loading={isLoading}
+            loadingPosition="end"
+            endIcon={<SendIcon/>}
+            variant="contained"
             onClick={getDataButtonClick}
             sx={{
               color: colors.grey[100],
@@ -593,7 +604,7 @@ const Invoices = () => {
             }}
           >
             Send invoice
-          </Button>
+          </LoadingButton>
         </Box>
       </Box>
 
