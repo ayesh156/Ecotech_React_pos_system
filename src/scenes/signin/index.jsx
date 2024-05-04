@@ -378,7 +378,7 @@ const SignIn = ({ onLogin }) => {
                   sx={{
                     marginTop: "20px",
                     "& .MuiInputLabel-root.Mui-focused": {
-                      color: colors.primary[100], // Change focus color here
+                      color: colors.primary[100],
                     },
                   }}
                   InputProps={{

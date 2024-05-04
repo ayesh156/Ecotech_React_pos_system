@@ -290,14 +290,15 @@ const Invoices = () => {
       <Header title="INVOICES" subtitle="List of Invoice Balances" />
       <Box
         m="40px 0 0 0"
-        sx={{ display: "flex", justifyContent: "space-between" }}
+        sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
         <TextField
           label="Summary"
           multiline
           rows={4}
+          fullWidth
           color="secondary"
-          sx={{ marginTop: "10px", width: "450px" }}
+          sx={{ marginTop: "10px" }}
           value={summary}
           onChange={(event) => {
             setSummary(event.target.value);
@@ -310,7 +311,7 @@ const Invoices = () => {
             justifyContent: "flex-end",
           }}
         >
-          <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
+          <Box sx={{ display: "flex", gap: "20px", marginTop: "10px", gridColumn: "span 4" }}>
             <Autocomplete
               disablePortal
               id="combo-box-demo"
@@ -320,7 +321,8 @@ const Invoices = () => {
                 setCustomer(newValue);
                 setIsCustomerError(newValue === null);
               }}
-              sx={{ width: 230, position: "relative" }}
+              fullWidth
+              sx={{ position: "relative" }}
               renderInput={(params) => (
                 <>
                   <TextField {...params} label="Customer" color="secondary" />
@@ -343,7 +345,8 @@ const Invoices = () => {
             <TextField
               color="secondary"
               label="Invoice number"
-              sx={{ alignSelf: "flex-end", width: 230 }}
+              fullWidth
+              sx={{ alignSelf: "flex-end" }}
               value={invoiceNumber}
               onChange={(event) => {
                 setInvoiceNumber(event.target.value);

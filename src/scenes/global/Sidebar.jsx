@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
@@ -8,7 +9,7 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
@@ -41,12 +42,21 @@ const Sidebar = ({ onLogin }) => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
+  const isDesktop = useMediaQuery('(min-width:600px)');
 
   const handleSignIn = () => {
     // Perform sign-in logic
     // For simplicity, just call the onLogin function passed from the parent component
     onLogin();
   };
+
+  useEffect(() => {
+    if (isDesktop) {
+      setIsCollapsed(false);
+    } else {
+      setIsCollapsed(true);
+    }
+  }, [isDesktop]);
 
   return (
     <Box
@@ -190,13 +200,6 @@ const Sidebar = ({ onLogin }) => {
               Pages
             </Typography>
             <Item
-              title="Profile Form"
-              to="/form"
-              icon={<PersonOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
               title="Calendar"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
@@ -207,6 +210,13 @@ const Sidebar = ({ onLogin }) => {
               title="FAQ Page"
               to="/faq"
               icon={<HelpOutlineOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Settings"
+              to="/settings"
+              icon={<ManageAccountsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />

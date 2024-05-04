@@ -1,12 +1,13 @@
 import { Box, IconButton, useTheme } from "@mui/material";
 import { useContext } from "react";
+import { Link } from "react-router-dom";
 import { ColorModeContext, tokens } from "../../theme.js";
 import InputBase from "@mui/material/InputBase";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon  from "@mui/icons-material/DarkModeOutlined";
 import NotificationsOutlinedIcon  from "@mui/icons-material/NotificationsOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import SearchIcon from "@mui/icons-material/Search";
 
 const Topbar = () => {
@@ -44,9 +45,11 @@ const Topbar = () => {
         <IconButton>
         <SettingsOutlinedIcon />
         </IconButton>
+        <Link to="/settings" style={{ textDecoration: 'none' }}>
         <IconButton>
-          <PersonOutlinedIcon />
+          <ManageAccountsOutlinedIcon />
         </IconButton>
+        </Link>
       </Box>
     </Box>
   );
