@@ -71,7 +71,7 @@ const Settings = () => {
 
   return (
     <Box m="20px">
-      <Header title="GENERAL SETTINGS" subtitle="Select your company default logo (225 x 225 pixels)" />
+      <Header title="General Settings" subtitle="Select your company default logo (225 x 225 pixels)" />
 
       <Formik
         onSubmit={handleFormSubmit}

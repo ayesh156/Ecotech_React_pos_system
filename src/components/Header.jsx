@@ -12,6 +12,7 @@ const Header = ({ title, subtitle }) => {
         color={colors.grey[100]}
         fontWeight="bold"
         sx={{ mb: "5px" }}
+        textTransform={"capitalize"}
       >
         {title}
       </Typography>

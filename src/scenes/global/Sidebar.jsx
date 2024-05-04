@@ -7,7 +7,6 @@ import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
@@ -171,7 +170,7 @@ const Sidebar = ({ onLogin }) => {
               {!isCollapsed ? "Invoices" : "Invoi..."}
             </Typography>
             <Item
-              title="New Invoice"
+              title="Invoices"
               to="/invoices"
               icon={<ReceiptOutlinedIcon />}
               selected={selected}
@@ -181,13 +180,6 @@ const Sidebar = ({ onLogin }) => {
               title="Manage Team"
               to="/team"
               icon={<PeopleOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Contacts Information"
-              to="/contacts"
-              icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />

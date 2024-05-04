@@ -6,7 +6,7 @@ import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import Team from "./scenes/team";
 import Invoices from "./scenes/invoices";
-import Contacts from "./scenes/contacts";
+import New_invoice from "./scenes/new_invoice";
 import Settings from "./scenes/settings";
 import Calendar from "./scenes/calendar";
 import { useState } from "react";
@@ -39,8 +39,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/team" element={<Team />} />
-                <Route path="/contacts" element={<Contacts />} />
                 <Route path="/invoices" element={<Invoices />} />
+                <Route path="/invoices/new_invoice" element={<New_invoice />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/faq" element={<FAQ />} />
