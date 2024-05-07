@@ -4,10 +4,10 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useNavigate } from "react-router-dom";
-import KeyboardArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardArrowLeftOutlined';
+import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import { tokens } from "../../theme";
 import LoadingButton from "@mui/lab/LoadingButton";
-import SaveIcon from '@mui/icons-material/Save';
+import SaveIcon from "@mui/icons-material/Save";
 
 const initialValues = {
   name: "",
@@ -18,7 +18,10 @@ const initialValues = {
 const userSchema = yup.object().shape({
   name: yup.string().required("required"),
   description: yup.string().required("required"),
-  price: yup.number().required("Price is required").typeError("Price  is not valid"),
+  price: yup
+    .number()
+    .required("Price is required")
+    .typeError("Price  is not valid"),
 });
 
 const New_Product = () => {
@@ -29,7 +32,7 @@ const New_Product = () => {
   const navigate = useNavigate();
 
   const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values};
+    const updatedValues = { ...values };
 
     setIsLoading(true);
     setTimeout(() => {
@@ -41,20 +44,25 @@ const New_Product = () => {
     }, 1000); // Change the timeout value as needed
   };
 
-
   return (
     <Box m="20px">
-     <Button
-          sx={{display: "flex", alignItems: "center",}}
-          color="inherit"
-          onClick={() => {
-            navigate(-1);
-          }}
+      <Button
+        sx={{ display: "flex", alignItems: "center" }}
+        color="inherit"
+        onClick={() => {
+          navigate(-1);
+        }}
+      >
+        <KeyboardArrowLeftOutlinedIcon sx={{ fontSize: "35px" }} />
+        <Typography
+          variant="h3"
+          fontWeight="bold"
+          textTransform={"capitalize"}
+          color={colors.grey[100]}
         >
-          <KeyboardArrowLeftOutlinedIcon sx={{fontSize: "35px"}} />
-          <Typography variant="h3" fontWeight="bold" textTransform={"capitalize"} color={colors.grey[100]}>New Product & Service</Typography>
-          
-        </Button>
+          New Product & Service
+        </Typography>
+      </Button>
       <Formik
         onSubmit={saveProduct}
         initialValues={initialValues}
@@ -125,7 +133,7 @@ const New_Product = () => {
                 label="Price"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.email}
+                value={values.price}
                 name="price"
                 error={!!touched.price && !!errors.price}
                 helperText={touched.price && errors.price}
@@ -137,29 +145,28 @@ const New_Product = () => {
                 }}
               />
               <LoadingButton
-              loading={isLoading}
-              loadingPosition="end"
-              endIcon={<SaveIcon />}
-              variant="contained"
-              type="submit"
-              sx={{
-                gridColumn: "span 4",
-                marginTop: "15px",
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                fontSize: "17px",
-                fontWeight: "500",
-                paddingY: "10px",
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Save
-            </LoadingButton>
+                loading={isLoading}
+                loadingPosition="end"
+                endIcon={<SaveIcon />}
+                variant="contained"
+                type="submit"
+                sx={{
+                  gridColumn: "span 4",
+                  marginTop: "15px",
+                  textTransform: "capitalize",
+                  color: colors.grey[100],
+                  fontSize: "17px",
+                  fontWeight: "500",
+                  paddingY: "10px",
+                  backgroundColor: colors.blueAccent[700],
+                  "&:hover": {
+                    backgroundColor: colors.blueAccent[600],
+                  },
+                }}
+              >
+                Save
+              </LoadingButton>
             </Box>
-            
           </form>
         )}
       </Formik>

@@ -27,9 +27,46 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from "@mui/icons-material/Send";
 import { useNavigate } from "react-router-dom";
-import KeyboardArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardArrowLeftOutlined';
+import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
+import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
+import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
+import SaveIcon from "@mui/icons-material/Save";
+import { Formik } from "formik";
+import * as yup from "yup";
 
 const data = { names: ["Shawshank", "Chathuranga", "Malaka"] };
+
+const customerInitialValues = {
+  name: "",
+  email: "",
+  contact: "",
+};
+
+const phoneRegExp = /^[0]{1}[147]{1}[01245678]{1}[0-9]{7}$/;
+
+const customerSchema = yup.object().shape({
+  name: yup.string().required("required"),
+  email: yup.string().email("invalid email").required("required"),
+  contact: yup
+    .string()
+    .matches(phoneRegExp, "Phone number is not valid")
+    .required("required"),
+});
+
+const productInitialValues = {
+  name: "",
+  description: "",
+  price: "",
+};
+
+const productSchema = yup.object().shape({
+  name: yup.string().required("required"),
+  description: yup.string().required("required"),
+  price: yup
+    .number()
+    .required("Price is required")
+    .typeError("Price  is not valid"),
+});
 
 const New_invoice = () => {
   const theme = useTheme();
@@ -53,6 +90,8 @@ const New_invoice = () => {
   const [footerNotes, setFooterNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [openNProduct, setOpenNProduct] = useState(false);
+  const [openNCustomer, setOpenNCustomer] = useState(false);
 
   const handleDeleteRow = (idToDelete) => {
     setGridRows((prevRows) => prevRows.filter((row) => row.id !== idToDelete));
@@ -171,6 +210,34 @@ const New_invoice = () => {
     };
 
     return collectedData;
+  };
+
+  const saveProduct = (values, { resetForm }) => {
+    const updatedValues = { ...values };
+
+    setIsLoading(true);
+    setTimeout(() => {
+      console.log(updatedValues);
+
+      resetForm();
+
+      setIsLoading(false);
+      setOpenNProduct(false);
+    }, 1000); // Change the timeout value as needed
+  };
+
+  const saveCustomer = (values, { resetForm }) => {
+    const updatedValues = { ...values };
+
+    setIsLoading(true);
+    setTimeout(() => {
+      console.log(updatedValues);
+
+      resetForm();
+
+      setIsLoading(false);
+      setOpenNCustomer(false);
+    }, 1000); // Change the timeout value as needed
   };
 
   const getDataButtonClick = () => {
@@ -294,21 +361,26 @@ const New_invoice = () => {
 
   return (
     <Box m="20px">
-      
-        <Button
-          sx={{display: "flex", alignItems: "center",}}
-          color="inherit"
-          onClick={() => {
-            navigate(-1);
-          }}
+      <Button
+        sx={{ display: "flex", alignItems: "center" }}
+        color="inherit"
+        onClick={() => {
+          navigate(-1);
+        }}
+      >
+        <KeyboardArrowLeftOutlinedIcon sx={{ fontSize: "35px" }} />
+        <Typography
+          variant="h3"
+          fontWeight="bold"
+          textTransform={"capitalize"}
+          color={colors.grey[100]}
         >
-          <KeyboardArrowLeftOutlinedIcon sx={{fontSize: "35px"}} />
-          <Typography variant="h3" fontWeight="bold" textTransform={"capitalize"} color={colors.grey[100]}>New Invoices</Typography>
-          
-        </Button>
+          New Invoices
+        </Typography>
+      </Button>
       <Box
         m="40px 0 0 0"
-        sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
+        sx={{ display: "flex", justifyContent: "space-between", gap: "80px" }}
       >
         <TextField
           label="Summary"
@@ -327,6 +399,7 @@ const New_invoice = () => {
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
+            idth: "500px",
           }}
         >
           <Box
@@ -337,36 +410,62 @@ const New_invoice = () => {
               gridColumn: "span 4",
             }}
           >
-            <Autocomplete
-              disablePortal
-              id="combo-box-demo"
-              options={data.names}
-              value={customer}
-              onChange={(event, newValue) => {
-                setCustomer(newValue);
-                setIsCustomerError(newValue === null);
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "5px",
               }}
-              fullWidth
-              sx={{ position: "relative" }}
-              renderInput={(params) => (
-                <>
-                  <TextField {...params} label="Customer" color="secondary" />
-                  {isCustomerError && (
-                    <FormHelperText
-                      sx={{
-                        color: colors.redAccent[500],
-                        marginLeft: "10px",
-                        position: "absolute", // Set position absolute
-                        bottom: -20, // Adjust this value as needed
-                        left: 0,
-                      }}
-                    >
-                      The customer field is required
-                    </FormHelperText>
-                  )}
-                </>
-              )}
-            />
+            >
+              <Button
+                onClick={() => {
+                  setOpenNCustomer(true);
+                }}
+                sx={{
+                  textTransform: "none",
+                  backgroundColor: colors.blueAccent[700],
+                  color: colors.grey[100],
+                  fontSize: "16px",
+                  height: "50px",
+                  fontWeight: "500",
+                  "&:hover": {
+                    backgroundColor: colors.blueAccent[800],
+                  },
+                }}
+              >
+                <PersonAddAltOutlinedIcon />
+              </Button>
+              <Autocomplete
+                disablePortal
+                id="combo-box-demo"
+                options={data.names}
+                value={customer}
+                onChange={(event, newValue) => {
+                  setCustomer(newValue);
+                  setIsCustomerError(newValue === null);
+                }}
+                sx={{ position: "relative", width: "180px" }}
+                renderInput={(params) => (
+                  <>
+                    <TextField {...params} label="Customer" color="secondary" />
+                    {isCustomerError && (
+                      <FormHelperText
+                        sx={{
+                          color: colors.redAccent[500],
+                          marginLeft: "10px",
+                          position: "absolute", // Set position absolute
+                          bottom: -20, // Adjust this value as needed
+                          left: 0,
+                        }}
+                      >
+                        The customer field is required
+                      </FormHelperText>
+                    )}
+                  </>
+                )}
+              />
+            </Box>
             <TextField
               color="secondary"
               label="Invoice number"
@@ -442,35 +541,68 @@ const New_invoice = () => {
             if (fieldName !== "id" && fieldName !== "amount") {
               if (fieldName === "name") {
                 return (
-                  <Autocomplete
-                    key={fieldName}
-                    options={mockDataInvoices}
-                    value={newRow.name ? mockDataInvoices.find(option => option.name === newRow.name) : null}
-                    getOptionLabel={(option) => option.name}
-                    onChange={(event, newValue) => {
-                      if (newValue) {
-                        setNewRow((prevRow) => ({
-                          ...prevRow,
-                          name: newValue.name,
-                          description: "",
-                          qty: "",
-                          price: "",
-                          tax: "",
-                          amount: "",
-                        }));
-                      }
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "5px",
                     }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Name"
-                        color="secondary"
-                        sx={{
-                          width: "200px",
-                        }}
-                      />
-                    )}
-                  />
+                  >
+                    <Button
+                      onClick={() => {
+                        setOpenNProduct(true);
+                      }}
+                      sx={{
+                        textTransform: "none",
+                        backgroundColor: colors.blueAccent[700],
+                        color: colors.grey[100],
+                        fontSize: "16px",
+                        height: "50px",
+                        fontWeight: "500",
+                        "&:hover": {
+                          backgroundColor: colors.blueAccent[800],
+                        },
+                      }}
+                    >
+                      <AddCardOutlinedIcon />
+                    </Button>
+                    <Autocomplete
+                      key={fieldName}
+                      options={mockDataInvoices}
+                      value={
+                        newRow.name
+                          ? mockDataInvoices.find(
+                              (option) => option.name === newRow.name
+                            )
+                          : null
+                      }
+                      getOptionLabel={(option) => option.name}
+                      onChange={(event, newValue) => {
+                        if (newValue) {
+                          setNewRow((prevRow) => ({
+                            ...prevRow,
+                            name: newValue.name,
+                            description: "",
+                            qty: "",
+                            price: "",
+                            tax: "",
+                            amount: "",
+                          }));
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Name"
+                          color="secondary"
+                          sx={{
+                            width: "150px",
+                          }}
+                        />
+                      )}
+                    />
+                  </Box>
                 );
               } else {
                 return (
@@ -749,6 +881,252 @@ const New_invoice = () => {
               Submit
             </Button>
           </DialogActions>
+        </Dialog>
+      </React.Fragment>
+
+      <React.Fragment>
+        <Dialog
+          open={openNProduct}
+          keepMounted
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogTitle fontSize={16}>{"Add Product & Service"}</DialogTitle>
+          <Box width="400px">
+            <Formik
+              onSubmit={saveProduct}
+              initialValues={productInitialValues}
+              validationSchema={productSchema}
+            >
+              {({
+                values,
+                errors,
+                touched,
+                handleBlur,
+                handleChange,
+                handleSubmit,
+                resetForm,
+              }) => (
+                <form onSubmit={handleSubmit}>
+                  <DialogContent>
+                    <Box
+                      display="grid"
+                      gap="30px"
+                      gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+                      sx={{
+                        gap: isNonMobile ? "20px" : undefined,
+                      }}
+                    >
+                      <TextField
+                        fullWidth
+                        variant="filled"
+                        type="text"
+                        label="Name"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.name}
+                        name="name"
+                        error={!!touched.name && !!errors.name}
+                        helperText={touched.name && errors.name}
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={7}
+                        variant="filled"
+                        type="text"
+                        label="Description"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.description}
+                        name="description"
+                        error={!!touched.description && !!errors.description}
+                        helperText={touched.description && errors.description}
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        variant="filled"
+                        type="text"
+                        label="Price"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.price}
+                        name="price"
+                        error={!!touched.price && !!errors.price}
+                        helperText={touched.price && errors.price}
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                    </Box>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button
+                      onClick={() => {
+                        setOpenNProduct(false);
+                      }}
+                      sx={{ color: colors.primary[100] }}
+                    >
+                      Close
+                    </Button>
+                    <LoadingButton
+                      loading={isLoading} // Pass loading state to LoadingButton
+                      type="submit"
+                      sx={{
+                        textTransform: "capitalize", // Remove text transformation
+                        backgroundColor: "transparent", // Remove background color
+                        color: colors.primary[100],
+                        fontSize: "inherit", // Inherit font size
+                        fontWeight: "inherit", // Inherit font weight
+                        padding: 0, // Remove padding
+                        "&:hover": {
+                          backgroundColor: "transparent", // Remove hover background color
+                        },
+                      }}
+                    >
+                      Submit
+                    </LoadingButton>
+                  </DialogActions>
+                </form>
+              )}
+            </Formik>
+          </Box>
+        </Dialog>
+      </React.Fragment>
+
+      <React.Fragment>
+        <Dialog
+          open={openNCustomer}
+          keepMounted
+          aria-describedby="alert-dialog-slide-description"
+        >
+          <DialogTitle fontSize={16}>{"Add Customer"}</DialogTitle>
+          <Box width="400px">
+            <Formik
+              onSubmit={saveCustomer}
+              initialValues={customerInitialValues}
+              validationSchema={customerSchema}
+            >
+              {({
+                values,
+                errors,
+                touched,
+                handleBlur,
+                handleChange,
+                handleSubmit,
+                resetForm,
+              }) => (
+                <form onSubmit={handleSubmit}>
+                  <DialogContent>
+                    <Box
+                      display="grid"
+                      gap="30px"
+                      gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+                      sx={{
+                        gap: isNonMobile ? "20px" : undefined,
+                      }}
+                    >
+                      <TextField
+                        fullWidth
+                        variant="filled"
+                        type="text"
+                        label="Customer Name"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.name}
+                        name="name"
+                        error={!!touched.name && !!errors.name}
+                        helperText={touched.name && errors.name}
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        variant="filled"
+                        type="email"
+                        label="Email"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.email}
+                        name="email"
+                        error={!!touched.email && !!errors.email}
+                        helperText={touched.email && errors.email}
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        variant="filled"
+                        type="text"
+                        label="Phone"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.contact}
+                        name="contact"
+                        error={!!touched.contact && !!errors.contact}
+                        helperText={touched.contact && errors.contact}
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                    </Box>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button
+                      onClick={() => {
+                        setOpenNCustomer(false);
+                      }}
+                      sx={{ color: colors.primary[100] }}
+                    >
+                      Close
+                    </Button>
+                    <LoadingButton
+                      loading={isLoading} // Pass loading state to LoadingButton
+                      type="submit"
+                      sx={{
+                        textTransform: "capitalize", // Remove text transformation
+                        backgroundColor: "transparent", // Remove background color
+                        color: colors.primary[100],
+                        fontSize: "inherit", // Inherit font size
+                        fontWeight: "inherit", // Inherit font weight
+                        padding: 0, // Remove padding
+                        "&:hover": {
+                          backgroundColor: "transparent", // Remove hover background color
+                        },
+                      }}
+                    >
+                      Submit
+                    </LoadingButton>
+                  </DialogActions>
+                </form>
+              )}
+            </Formik>
+          </Box>
         </Dialog>
       </React.Fragment>
     </Box>
