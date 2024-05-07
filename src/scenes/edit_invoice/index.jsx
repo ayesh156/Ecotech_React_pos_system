@@ -12,7 +12,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import { mockDataInvoices } from "../../data/mockData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -25,13 +25,17 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
-import SendIcon from "@mui/icons-material/Send";
-import { useNavigate } from "react-router-dom";
-import KeyboardArrowLeftOutlinedIcon from '@mui/icons-material/KeyboardArrowLeftOutlined';
+import SaveIcon from "@mui/icons-material/Save";
+import { useNavigate, useParams } from "react-router-dom";
+import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
+import { mockInvoices } from "../../data/mockData";
+import Loader from "../../components/Loader";
+import dayjs from "dayjs";
+import PageNotFound from "../page_not_found";
 
 const data = { names: ["Shawshank", "Chathuranga", "Malaka"] };
 
-const New_invoice = () => {
+const Edit_invoice = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [gridRows, setGridRows] = useState([]);
@@ -53,6 +57,10 @@ const New_invoice = () => {
   const [footerNotes, setFooterNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [resultFound, setResultFound] = useState(false);
+
+  const { id } = useParams();
 
   const handleDeleteRow = (idToDelete) => {
     setGridRows((prevRows) => prevRows.filter((row) => row.id !== idToDelete));
@@ -126,6 +134,52 @@ const New_invoice = () => {
     },
   ];
 
+  const fetchProduct = useCallback(() => {
+    const product = mockInvoices.find(
+      (item) => item.invoiceNumber === parseInt(id)
+    );
+
+    if (product) {
+      setResultFound(true);
+      setGridRows(product.productTable);
+      setTotalAmount(calculateTotalAmount(product.productTable));
+      setCustomer(product.selectedCustomer);
+      setSelectedDate(product.selectedDate);
+      setSelectedDueDate(product.selectedDueDate);
+      setSummary(product.summary);
+      setInvoiceNumber(product.invoiceNumber);
+      setNotes(product.notes);
+      setPaymentInstructions(product.paymentInstructions);
+      setFooterNotes(product.footerNotes);
+
+      setTimeout(() => {
+        setInitialValuesSet(true);
+      }, 1000);
+    } else {
+      console.log("Not Found");
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+    
+  }, [initialValuesSet, fetchProduct]);
+
+  useEffect(() => {
+    if (initialValuesSet) {
+      // Calculate the lastId and set it
+      let maxId = 0;
+      gridRows.forEach((row) => {
+        if (row.id > maxId) {
+          maxId = row.id;
+        }
+      });
+      setLastId(maxId);
+    }
+  }, [initialValuesSet, gridRows]);
+
   useEffect(() => {
     // Calculate total amount whenever gridRows change
     let sum = 0;
@@ -139,13 +193,9 @@ const New_invoice = () => {
     // Collect values from Autocomplete
     const selectedCustomer = customer;
 
-    // Collect values from Datepickers
-    const selectedDateValue = selectedDate
-      ? selectedDate.format("YYYY-MM-DD")
-      : null;
-    const selectedDueDateValue = selectedDueDate
-      ? selectedDueDate.format("YYYY-MM-DD")
-      : null;
+    //     // Collect values from Datepickers
+    const selectedDateValue = selectedDate ? dayjs(selectedDate).format("YYYY-MM-DD") : null;
+    const selectedDueDateValue = selectedDueDate ? dayjs(selectedDueDate).format("YYYY-MM-DD") : null;
 
     // Collect values from DataGrid rows
     const productTable = gridRows.map((row) => ({
@@ -184,23 +234,10 @@ const New_invoice = () => {
     setIsLoading(true);
     setTimeout(() => {
       const collectedData = collectData();
+
+      console.log(id);
       console.log(collectedData);
 
-      // Reset form data
-      setCustomer(null);
-      setIsCustomerError(false);
-      setSelectedDate(null);
-      setIsDateError(false);
-      setSelectedDueDate(null);
-      setIsDueDateError(null);
-      setSummary("");
-      setInvoiceNumber("");
-      setNotes("");
-      setPaymentInstructions("");
-      setFooterNotes("");
-
-      // Clear table rows
-      setGridRows([]);
       setIsLoading(false);
     }, 1000); // Change the timeout value as needed
   };
@@ -255,6 +292,16 @@ const New_invoice = () => {
     setLastId(newId);
   };
 
+  const calculateTotalAmount = (productTable) => {
+    let total = 0;
+    productTable.forEach((product) => {
+      const amount = product.qty * product.price;
+      const taxAmount = (amount * product.tax) / 100;
+      total += amount - taxAmount;
+    });
+    return total;
+  };
+
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
     const taxAmount = (amount * tax) / 100;
@@ -292,20 +339,31 @@ const New_invoice = () => {
     setOpen(false);
   };
 
+  if (!resultFound) {
+    return <PageNotFound />;
+  } else if (!initialValuesSet) {
+    return <Loader />;
+  }
+
   return (
     <Box m="20px">
-      
-        <Button
-          sx={{display: "flex", alignItems: "center",}}
-          color="inherit"
-          onClick={() => {
-            navigate(-1);
-          }}
+      <Button
+        sx={{ display: "flex", alignItems: "center" }}
+        color="inherit"
+        onClick={() => {
+          navigate(-1);
+        }}
+      >
+        <KeyboardArrowLeftOutlinedIcon sx={{ fontSize: "35px" }} />
+        <Typography
+          variant="h3"
+          fontWeight="bold"
+          textTransform={"capitalize"}
+          color={colors.grey[100]}
         >
-          <KeyboardArrowLeftOutlinedIcon sx={{fontSize: "35px"}} />
-          <Typography variant="h3" fontWeight="bold" textTransform={"capitalize"} color={colors.grey[100]}>New Invoices</Typography>
-          
-        </Button>
+          Edit Invoice
+        </Typography>
+      </Button>
       <Box
         m="40px 0 0 0"
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
@@ -382,7 +440,7 @@ const New_invoice = () => {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={["DatePicker"]}>
                 <DatePicker
-                  value={selectedDate}
+                  value={dayjs(selectedDate)}
                   format="YYYY-MM-DD"
                   onChange={(newValue) => {
                     setSelectedDate(newValue);
@@ -404,7 +462,7 @@ const New_invoice = () => {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={["DatePicker"]}>
                 <DatePicker
-                  value={selectedDueDate}
+                  value={dayjs(selectedDueDate)}
                   format="YYYY-MM-DD"
                   onChange={(newValue) => {
                     setSelectedDueDate(newValue);
@@ -445,8 +503,8 @@ const New_invoice = () => {
                   <Autocomplete
                     key={fieldName}
                     options={mockDataInvoices}
-                    value={newRow.name ? mockDataInvoices.find(option => option.name === newRow.name) : null}
                     getOptionLabel={(option) => option.name}
+                    value={newRow.name ? mockDataInvoices.find(option => option.name === newRow.name) : null}
                     onChange={(event, newValue) => {
                       if (newValue) {
                         setNewRow((prevRow) => ({
@@ -622,7 +680,7 @@ const New_invoice = () => {
           <LoadingButton
             loading={isLoading}
             loadingPosition="end"
-            endIcon={<SendIcon />}
+            endIcon={<SaveIcon />}
             variant="contained"
             onClick={getDataButtonClick}
             sx={{
@@ -634,7 +692,7 @@ const New_invoice = () => {
               },
             }}
           >
-            Send invoice
+            Save
           </LoadingButton>
         </Box>
       </Box>
@@ -755,4 +813,4 @@ const New_invoice = () => {
   );
 };
 
-export default New_invoice;
+export default Edit_invoice;

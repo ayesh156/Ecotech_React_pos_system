@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
@@ -21,6 +21,15 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check if the current location pathname matches the 'to' prop
+    if (location.pathname === to) {
+      setSelected(title);
+    }
+  }, [location, to, setSelected, title]);
+  
   return (
     <MenuItem
       active={selected === title}
@@ -177,9 +186,9 @@ const Sidebar = ({ onLogin }) => {
               setSelected={setSelected}
             />
             <Item
-              title="Manage Team"
-              to="/team"
-              icon={<PeopleOutlinedIcon />}
+              title="Product & Services"
+              to="/product-services"
+              icon={<ShoppingBagOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />

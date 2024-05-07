@@ -10,6 +10,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import ClearIcon from "@mui/icons-material/Clear";
+import EditIcon from "@mui/icons-material/Edit";
 
 const Invoices = () => {
   const theme = useTheme();
@@ -42,8 +43,21 @@ const Invoices = () => {
     },
     {
       field: "totalAmount",
-      headerName: "Total Amount",
+      headerName: "Total Amountt (Rs.)",
+      type: "number",
       flex: 1,
+    },
+    {
+      field: "edit",
+      headerName: "Edit",
+      flex: 0.3,
+      renderCell: (params) => (
+        <Link to={`${params.row.id}/edit`}>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <EditIcon style={{ color: colors.blueAccent[500] }} />
+          </Box>
+        </Link>
+      ),
     },
   ];
 
@@ -112,7 +126,7 @@ const Invoices = () => {
         <Link to={"/invoices/new_invoice"}>
           <Button
             sx={{
-              textTransform: "capitalize",
+              textTransform: "none",
               backgroundColor: colors.blueAccent[700],
               color: colors.grey[100],
               fontSize: "17px",

@@ -1,79 +1,370 @@
 import { tokens } from "../theme";
 
-export const mockDataTeam = [
+export const mockDataProduct = [
   {
     id: 1,
-    name: "Jon Snow",
-    email: "jonsnow@gmail.com",
-    age: 35,
-    phone: "(665)121-5454",
-    access: "admin",
+    name: "Keyboard",
+    description: "A high-quality keyboard for efficient typing.",
+    price: 35000,
   },
   {
     id: 2,
-    name: "Cersei Lannister",
-    email: "cerseilannister@gmail.com",
-    age: 42,
-    phone: "(421)314-2288",
-    access: "manager",
+    name: "Mouse",
+    description: "A comfortable and precise mouse for smooth navigation.",
+    price: 25000
   },
   {
     id: 3,
-    name: "Jaime Lannister",
-    email: "jaimelannister@gmail.com",
-    age: 45,
-    phone: "(422)982-6739",
-    access: "user",
+    name: "Monitor",
+    description: "A large, high-resolution monitor for immersive viewing experience.",
+    price: 60000
   },
   {
     id: 4,
-    name: "Anya Stark",
-    email: "anyastark@gmail.com",
-    age: 16,
-    phone: "(921)425-6742",
-    access: "admin",
+    name: "CPU (Central Processing Unit)",
+    description: "The brain of your computer, responsible for executing tasks.",
+    price: 80000
   },
   {
     id: 5,
-    name: "Daenerys Targaryen",
-    email: "daenerystargaryen@gmail.com",
-    age: 31,
-    phone: "(421)445-1189",
-    access: "user",
+    name: "RAM (Random Access Memory)",
+    description: "Fast memory for quick access to frequently used data.",
+    price: 40000
   },
   {
     id: 6,
-    name: "Ever Melisandre",
-    email: "evermelisandre@gmail.com",
-    age: 150,
-    phone: "(232)545-6483",
-    access: "manager",
+    name: "Hard Drive (HDD)",
+    description: "High-capacity storage for your files and applications.",
+    price: 50000
   },
   {
     id: 7,
-    name: "Ferrara Clifford",
-    email: "ferraraclifford@gmail.com",
-    age: 44,
-    phone: "(543)124-0123",
-    access: "user",
+    name: "Solid State Drive (SSD)",
+    description: "Lightning-fast storage with no moving parts.",
+    price: 70000
   },
   {
     id: 8,
-    name: "Rossini Frances",
-    email: "rossinifrances@gmail.com",
-    age: 36,
-    phone: "(222)444-5555",
-    access: "user",
+    name: "Graphics Card",
+    description: "Delivers stunning visuals and smooth gaming performance.",
+    price: 90000
   },
   {
     id: 9,
-    name: "Harvey Roxie",
-    email: "harveyroxie@gmail.com",
-    age: 65,
-    phone: "(444)555-6239",
-    access: "admin",
+    name: "Motherboard",
+    description: "Connects and coordinates all components of your computer.",
+    price: 55000
   },
+  {
+    id: 10,
+    name: "Power Supply Unit (PSU)",
+    description: "Provides stable power to all components of your computer.",
+    price: 30000
+  }
 ];
+
+export const mockInvoices = [
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 1,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 2,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 3,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 4,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 5,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 6,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 7,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 8,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 9,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+  {
+    footerNotes: "Sample Footer",
+    invoiceNumber: 10,
+    notes: "Sample Note",
+    paymentInstructions: "Sample Payment Instructions",
+    productTable: [
+      {
+        id: 1,
+        name: "Daenerys Targaryen",
+        description: "Sample Description",
+        qty: 2,
+        price: 300,
+        tax: 2,
+        amount: 500
+      },
+      {
+        id: 2,
+        name: "Tyrion Lannister",
+        description: "Sample Description 2",
+        qty: 3,
+        price: 400,
+        tax: 5,
+        amount: 500
+      }
+    ],
+    selectedCustomer: "Shawshank",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-05-31",
+    summary: "Sample Summary"
+  },
+]
 
 export const mockDataContacts = [
   {
