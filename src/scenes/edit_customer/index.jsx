@@ -1,8 +1,8 @@
-import { useState } from "react"; // Make sure you import useState from react
+import { useState, useEffect, useCallback } from "react"; // Make sure you import useState from react
 import { Box, TextField, useTheme, Typography, Button } from "@mui/material";
 import { Formik } from "formik";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import { tokens } from "../../theme";
 import LoadingButton from "@mui/lab/LoadingButton";
@@ -12,7 +12,9 @@ import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
-import { sriLankaProvinces } from "../../data/mockData";
+import { sriLankaProvinces, sampleCustomerData } from "../../data/mockData";
+import Loader from "../../components/Loader";
+import PageNotFound from "../page_not_found";
 
 const initialFormValues = {
   name: "",
@@ -22,7 +24,7 @@ const initialFormValues = {
   address2: "",
   city: "",
   postal: "",
-  province: "", // Make sure this matches the initial value of your Select component
+  province: "",
   instructions: "",
   account: "",
   fax: "",
@@ -31,13 +33,54 @@ const initialFormValues = {
   notes: "",
 };
 
-const New_Customer = () => {
+const Edit_Customer = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const isNonMobile = useMediaQuery("(min-width:800px)");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [selectedProvince, setSelectedProvince] = useState("");
+  const { id } = useParams(); // Get the id from the URL params
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [resultFound, setResultFound] = useState(false);
+
+
+  const setInitialFormValues = (customer) => {
+    // Set initial form values with customer data
+    initialFormValues.name = customer.name;
+    initialFormValues.email = customer.email;
+    initialFormValues.contact = customer.contact;
+    initialFormValues.address1 = customer.address1;
+    initialFormValues.address2 = customer.address2;
+    initialFormValues.city = customer.city;
+    initialFormValues.postal = customer.postal;
+    setSelectedProvince(customer.province);
+    initialFormValues.instructions = customer.instructions;
+    initialFormValues.account = customer.account;
+    initialFormValues.fax = customer.fax;
+    initialFormValues.mobile = customer.mobile;
+    initialFormValues.website = customer.website;
+    initialFormValues.notes = customer.notes;
+  };
+
+  const fetchProduct = useCallback(() => {
+    const customer = sampleCustomerData.find((customer) => customer.id === parseInt(id));
+    // Set the form values to the fetched customer data
+    if (customer) {
+      setResultFound(true);
+      setInitialFormValues(customer);
+      setTimeout(()=>{
+        setInitialValuesSet(true);
+      }, 1000)
+    }
+      
+  }, [id] );
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+  }, [initialValuesSet, fetchProduct]);
 
   const saveCustomer = (values, { resetForm }) => {
     const updatedValues = {
@@ -49,10 +92,18 @@ const New_Customer = () => {
     setTimeout(() => {
       setIsLoading(false);
       console.log(updatedValues); // Log all form values
-      resetForm();
-      setSelectedProvince("");
     }, 1000);
   };
+
+  if (!resultFound) {
+    return (
+      <PageNotFound />
+    ); 
+  }else if (!initialValuesSet) {
+    return (
+      <Loader />
+    ); 
+  }
 
   return (
     <Box m="20px">
@@ -70,14 +121,14 @@ const New_Customer = () => {
           textTransform={"capitalize"}
           color={colors.grey[100]}
         >
-          New Customer
+          Edit Customer
         </Typography>
       </Button>
       <Formik
         onSubmit={saveCustomer} // Pass values to saveCustomer function
         initialValues={initialFormValues}
       >
-        {({ values,handleBlur, handleChange, handleSubmit, resetForm }) => (
+        {({ values,handleBlur, handleChange, handleSubmit }) => (
           <form onSubmit={handleSubmit}>
             <Box
               display="grid"
@@ -139,11 +190,9 @@ const New_Customer = () => {
                   },
                 }}
               />
-
               <Box sx={{ gridColumn: "span 4" }}>
                 <Divider />
               </Box>
-
               <Typography variant="h5" sx={{ fontWeight: "bold" }}>
                 Billing
               </Typography>
@@ -344,7 +393,6 @@ const New_Customer = () => {
                   },
                 }}
               />
-
               <LoadingButton
                 loading={isLoading}
                 loadingPosition="end"
@@ -375,4 +423,4 @@ const New_Customer = () => {
   );
 };
 
-export default New_Customer;
+export default Edit_Customer;

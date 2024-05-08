@@ -12,76 +12,186 @@ export const sriLankaProvinces = [
   "Western"
 ];
 
-export const mockDataCustomer = [
+export const sampleCustomerData = [
   {
     id: 1,
-    name: "Shewan",
-    email: "shewan@gmail.com",
-    phone: "0112322780",
-    balance: "2578"
+    name: "Eshara",
+    email: "eshara@gmail.com",
+    contact: "0712356879",
+    address1: "Address 1",
+    address2: "Address 2",
+    city: "City",
+    postal: "23025",
+    province: "Uva",
+    instructions: "Sample instruction",
+    account: "235689714",
+    fax: "0113658946",
+    mobile: "0712356897",
+    website: "sample.com",
+    notes: "Sample note",
+    balance: "23000"
   },
   {
     id: 2,
     name: "John",
     email: "john@example.com",
-    phone: "0123456789",
-    balance: "5000"
+    contact: "0712345678",
+    address1: "123 Main St",
+    address2: "Apt 101",
+    city: "Springfield",
+    postal: "12345",
+    province: "Western",
+    instructions: "Handle with care",
+    account: "987654321",
+    fax: "0112345678",
+    mobile: "0712345679",
+    website: "example.com",
+    notes: "VIP customer",
+    balance: "25000"
   },
   {
     id: 3,
     name: "Alice",
     email: "alice@example.com",
-    phone: "0198765432",
-    balance: "3500"
+    contact: "0712309876",
+    address1: "456 Oak St",
+    address2: "Suite 200",
+    city: "New York",
+    postal: "10001",
+    province: "Sabaragamuwa",
+    instructions: "Call before delivery",
+    account: "543216789",
+    fax: "0110987654",
+    mobile: "0712309875",
+    website: "aliceco.com",
+    notes: "Preferred shipping carrier: FedEx",
+    balance: "20000"
   },
   {
     id: 4,
     name: "Bob",
     email: "bob@example.com",
-    phone: "0187654321",
-    balance: "4200"
+    contact: "0712456789",
+    address1: "789 Pine St",
+    address2: "Unit B",
+    city: "Los Angeles",
+    postal: "90001",
+    province: "Northern",
+    instructions: "Fragile items",
+    account: "987654321",
+    fax: "0112345678",
+    mobile: "0712345679",
+    website: "bobcorp.com",
+    notes: "High-priority customer",
+    balance: "27000"
   },
   {
     id: 5,
     name: "Emma",
     email: "emma@example.com",
-    phone: "0133333333",
-    balance: "2800"
+    contact: "0712567890",
+    address1: "321 Elm St",
+    address2: "Floor 3",
+    city: "Chicago",
+    postal: "60601",
+    province: "Central",
+    instructions: "Leave package at front desk",
+    account: "654321987",
+    fax: "0118765432",
+    mobile: "0712567891",
+    website: "emmasupply.com",
+    notes: "Special discount applies",
+    balance: "30000"
   },
   {
     id: 6,
     name: "David",
     email: "david@example.com",
-    phone: "0177777777",
-    balance: "2000"
+    contact: "0712678901",
+    address1: "987 Maple St",
+    address2: "Suite 100",
+    city: "Houston",
+    postal: "77001",
+    province: "North Western",
+    instructions: "Delivery after 5 PM",
+    account: "321987654",
+    fax: "0117890123",
+    mobile: "0712678902",
+    website: "davidtraders.com",
+    notes: "Requires signature on delivery",
+    balance: "30000"
   },
   {
     id: 7,
     name: "Sophia",
     email: "sophia@example.com",
-    phone: "0166666666",
-    balance: "3200"
+    contact: "0712789012",
+    address1: "654 Cedar St",
+    address2: "Unit C",
+    city: "San Francisco",
+    postal: "94101",
+    province: "Eastern",
+    instructions: "Notify by email when shipped",
+    account: "789654321",
+    fax: "0119012345",
+    mobile: "0712789013",
+    website: "sophiaco.com",
+    notes: "Large order expected next month",
+    balance: "40000"
   },
   {
     id: 8,
     name: "Michael",
     email: "michael@example.com",
-    phone: "0155555555",
-    balance: "4500"
+    contact: "0712890123",
+    address1: "147 Walnut St",
+    address2: "Floor 2",
+    city: "Seattle",
+    postal: "98101",
+    province: "Sabaragamuwa",
+    instructions: "Gift wrapping required",
+    account: "456123789",
+    fax: "0113456789",
+    mobile: "0712890124",
+    website: "michaels.com",
+    notes: "Frequent returns",
+    balance: "40000"
   },
   {
     id: 9,
     name: "Olivia",
     email: "olivia@example.com",
-    phone: "0144444444",
-    balance: "3900"
+    contact: "0712901234",
+    address1: "852 Pine St",
+    address2: "Apt 303",
+    city: "Boston",
+    postal: "02101",
+    province: "Southern",
+    instructions: "Do not leave at doorstep",
+    account: "789456123",
+    fax: "0115678901",
+    mobile: "0712901235",
+    website: "oliviacorp.com",
+    notes: "Preferred contact method: SMS",
+    balance: "50000"
   },
   {
     id: 10,
     name: "James",
     email: "james@example.com",
-    phone: "0101010101",
-    balance: "6000"
+    contact: "0713012345",
+    address1: "369 Oak St",
+    address2: "Unit D",
+    city: "Miami",
+    postal: "33101",
+    province: "North Central",
+    instructions: "Call for delivery time",
+    account: "123789456",
+    fax: "0116789012",
+    mobile: "0713012346",
+    website: "jamesenterprise.com",
+    notes: "Requires expedited shipping",
+    balance: "10000"
   }
 ];
 
@@ -150,6 +260,7 @@ export const mockDataProduct = [
 
 export const mockInvoices = [
   {
+    id: 1,
     footerNotes: "Sample Footer",
     invoiceNumber: 1,
     notes: "Sample Note",
@@ -177,9 +288,11 @@ export const mockInvoices = [
     selectedCustomer: "Shawshank",
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 200
   },
   {
+    id: 2,
     footerNotes: "Sample Footer",
     invoiceNumber: 2,
     notes: "Sample Note",
@@ -207,9 +320,11 @@ export const mockInvoices = [
     selectedCustomer: "Shawshank",
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 300
   },
   {
+    id: 3,
     footerNotes: "Sample Footer",
     invoiceNumber: 3,
     notes: "Sample Note",
@@ -237,9 +352,11 @@ export const mockInvoices = [
     selectedCustomer: "Shawshank",
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 350
   },
   {
+    id: 4,
     footerNotes: "Sample Footer",
     invoiceNumber: 4,
     notes: "Sample Note",
@@ -267,9 +384,11 @@ export const mockInvoices = [
     selectedCustomer: "Shawshank",
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 400
   },
   {
+    id: 5,
     footerNotes: "Sample Footer",
     invoiceNumber: 5,
     notes: "Sample Note",
@@ -295,11 +414,13 @@ export const mockInvoices = [
       }
     ],
     selectedCustomer: "Shawshank",
-    selectedDate: "2024-05-01",
+    selectedDate: "2024-04-11",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 300
   },
   {
+    id: 6,
     footerNotes: "Sample Footer",
     invoiceNumber: 6,
     notes: "Sample Note",
@@ -325,11 +446,13 @@ export const mockInvoices = [
       }
     ],
     selectedCustomer: "Shawshank",
-    selectedDate: "2024-05-01",
+    selectedDate: "2024-03-21",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 510
   },
   {
+    id: 7,
     footerNotes: "Sample Footer",
     invoiceNumber: 7,
     notes: "Sample Note",
@@ -355,11 +478,13 @@ export const mockInvoices = [
       }
     ],
     selectedCustomer: "Shawshank",
-    selectedDate: "2024-05-01",
+    selectedDate: "2024-04-21",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 530
   },
   {
+    id: 8,
     footerNotes: "Sample Footer",
     invoiceNumber: 8,
     notes: "Sample Note",
@@ -385,11 +510,13 @@ export const mockInvoices = [
       }
     ],
     selectedCustomer: "Shawshank",
-    selectedDate: "2024-05-01",
+    selectedDate: "2024-04-10",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 610
   },
   {
+    id: 9,
     footerNotes: "Sample Footer",
     invoiceNumber: 9,
     notes: "Sample Note",
@@ -416,10 +543,12 @@ export const mockInvoices = [
     ],
     selectedCustomer: "Shawshank",
     selectedDate: "2024-05-01",
-    selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    selectedDueDate: "2024-05-20",
+    summary: "Sample Summary",
+    paidAmount: 1000
   },
   {
+    id: 10,
     footerNotes: "Sample Footer",
     invoiceNumber: 10,
     notes: "Sample Note",
@@ -445,9 +574,10 @@ export const mockInvoices = [
       }
     ],
     selectedCustomer: "Shawshank",
-    selectedDate: "2024-05-01",
+    selectedDate: "2024-04-01",
     selectedDueDate: "2024-05-31",
-    summary: "Sample Summary"
+    summary: "Sample Summary",
+    paidAmount: 900
   },
 ]
 
@@ -458,6 +588,7 @@ export const mockDataContacts = [
     customer: "Chathura",
     date: "2024-05-06",
     dueDate: "2020-03-20",
+    dueAmount: "2000",
     totalAmount: "2999",
   },
   {
@@ -466,6 +597,7 @@ export const mockDataContacts = [
     customer: "John",
     date: "2024-05-15",
     dueDate: "2020-03-21",
+    dueAmount: "1000",
     totalAmount: "1500",
   },
   {
@@ -474,6 +606,7 @@ export const mockDataContacts = [
     customer: "Alice",
     date: "2024-03-22",
     dueDate: "2020-03-22",
+    dueAmount: "1000",
     totalAmount: "2000",
   },
   {
@@ -482,6 +615,7 @@ export const mockDataContacts = [
     customer: "Bob",
     date: "2024-05-23",
     dueDate: "2020-03-23",
+    dueAmount: "800",
     totalAmount: "1800",
   },
   {
@@ -490,6 +624,7 @@ export const mockDataContacts = [
     customer: "Emily",
     date: "2024-02-24",
     dueDate: "2020-03-24",
+    dueAmount: "200",
     totalAmount: "2200",
   },
   {
@@ -498,6 +633,7 @@ export const mockDataContacts = [
     customer: "David",
     date: "2024-02-25",
     dueDate: "2020-03-25",
+    dueAmount: "500",
     totalAmount: "2800",
   },
   {
@@ -506,6 +642,7 @@ export const mockDataContacts = [
     customer: "Emma",
     date: "2024-02-26",
     dueDate: "2020-03-26",
+    dueAmount: "1500",
     totalAmount: "3200",
   },
   {
@@ -514,6 +651,7 @@ export const mockDataContacts = [
     customer: "Sophia",
     date: "2020-03-27",
     dueDate: "2020-03-27",
+    dueAmount: "700",
     totalAmount: "2700",
   },
   {
@@ -522,6 +660,7 @@ export const mockDataContacts = [
     customer: "James",
     date: "2020-04-28",
     dueDate: "2020-03-28",
+    dueAmount: "900",
     totalAmount: "1900",
   },
   {
@@ -530,6 +669,7 @@ export const mockDataContacts = [
     customer: "Olivia",
     date: "2020-04-29",
     dueDate: "2020-03-29",
+    dueAmount: "400",
     totalAmount: "2400",
   },
 ];

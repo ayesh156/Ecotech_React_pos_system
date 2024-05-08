@@ -32,6 +32,8 @@ import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import { Formik } from "formik";
 import * as yup from "yup";
+import SaveIcon from "@mui/icons-material/Save";
+import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 
 const data = { names: ["Shawshank", "Chathuranga", "Malaka"] };
 
@@ -84,13 +86,28 @@ const New_invoice = () => {
   const [isDueDateError, setIsDueDateError] = useState(false);
   const [summary, setSummary] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [printLoading, setPrintLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
+
+  const handlePaidAmountChange = (event) => {
+    const amount = parseFloat(event.target.value);
+    if (!isNaN(amount)) {
+      setPaidAmount(amount);
+    } else {
+      setPaidAmount("");
+    }
+  };
+
+  const payableAmount = paidAmount - totalAmount;
 
   const handleDeleteRow = (idToDelete) => {
     setGridRows((prevRows) => prevRows.filter((row) => row.id !== idToDelete));
@@ -205,6 +222,7 @@ const New_invoice = () => {
       footerNotes,
       selectedDate: selectedDateValue,
       selectedDueDate: selectedDueDateValue,
+      paidAmount,
       productTable,
     };
 
@@ -239,7 +257,7 @@ const New_invoice = () => {
     }, 1000); // Change the timeout value as needed
   };
 
-  const getDataButtonClick = () => {
+  const printInvoice = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -247,29 +265,75 @@ const New_invoice = () => {
       return;
     }
 
-    setIsLoading(true);
+    setPrintLoading(true);
     setTimeout(() => {
       const collectedData = collectData();
       console.log(collectedData);
 
       // Reset form data
-      setCustomer(null);
-      setIsCustomerError(false);
-      setSelectedDate(null);
-      setIsDateError(false);
-      setSelectedDueDate(null);
-      setIsDueDateError(null);
-      setSummary("");
-      setInvoiceNumber("");
-      setNotes("");
-      setPaymentInstructions("");
-      setFooterNotes("");
+      resetInputs();
 
-      // Clear table rows
-      setGridRows([]);
-      setIsLoading(false);
-    }, 1000); // Change the timeout value as needed
+      setPrintLoading(false);
+    }, 1000);
   };
+
+  const sendInvoice = () => {
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setSendLoading(true);
+    setTimeout(() => {
+      const collectedData = collectData();
+      console.log(collectedData);
+
+      // Reset form data
+      resetInputs();
+
+      setSendLoading(false);
+    }, 1000);
+  };
+
+  const saveInvoice = () => {
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setSaveLoading(true);
+    setTimeout(() => {
+      const collectedData = collectData();
+      console.log(collectedData);
+
+      // Reset form data
+      resetInputs();
+
+      setSaveLoading(false);
+    }, 1000);
+  };
+
+  const resetInputs = () => {
+    setCustomer(null);
+    setIsCustomerError(false);
+    setSelectedDate(null);
+    setIsDateError(false);
+    setSelectedDueDate(null);
+    setIsDueDateError(null);
+    setSummary("");
+    setInvoiceNumber("");
+    setNotes("");
+    setPaymentInstructions("");
+    setFooterNotes("");
+    setPaidAmount("");
+
+    // Clear table rows
+    setGridRows([]);
+  }
 
   const [newRow, setNewRow] = useState({
     id: "",
@@ -682,7 +746,7 @@ const New_invoice = () => {
         >
           <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
         </Box>
-        <Box display="flex" justifyContent="space-between" p={2}>
+        <Box display="flex" justifyContent="space-between" py={1}>
           <Button
             sx={{
               color: colors.redAccent[300],
@@ -697,11 +761,31 @@ const New_invoice = () => {
           >
             <AddIcon /> Add another product
           </Button>
-          <Box display="flex" justifyContent="space-between" p={2}>
-            <Typography variant="h5" mr="10px">
-              Total:
-            </Typography>
-            <Typography variant="h5">LKR {totalAmount.toFixed(2)}</Typography>
+          <Box display="flex" justifyContent="space-between" py={2}>
+            <Box display="flex" justifyContent="space-between"  minWidth="260px" py={2}>
+              <Typography variant="h5" mr={1}>
+                Total Amount :
+              </Typography>
+              <Typography variant="h5" mr={2}>
+                LKR {totalAmount.toFixed(2)}
+              </Typography>
+            </Box>
+            <TextField
+              color="secondary"
+              label="Paid Amount"
+              sx={{ alignSelf: "flex-end", marginBottom: "6px" }}
+              value={paidAmount}
+              size="small"
+              onChange={handlePaidAmountChange}
+            />
+            <Box display="flex" justifyContent="space-between" minWidth="230px" ml={2} py={2}>
+              <Typography variant="h5" mr={1}>
+              Due Amount :
+              </Typography>
+              <Typography variant="h5">
+                LKR {payableAmount.toFixed(2)}
+              </Typography>
+            </Box>
           </Box>
         </Box>
         <Box
@@ -750,23 +834,66 @@ const New_invoice = () => {
               setFooterNotes(event.target.value);
             }}
           />
-          <LoadingButton
-            loading={isLoading}
-            loadingPosition="end"
-            endIcon={<SendIcon />}
-            variant="contained"
-            onClick={getDataButtonClick}
+          <Box
             sx={{
-              color: colors.grey[100],
-              minWidth: "150px",
-              backgroundColor: colors.blueAccent[700],
-              "&:hover": {
-                backgroundColor: colors.blueAccent[600],
-              },
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "10px",
             }}
           >
-            Send invoice
-          </LoadingButton>
+            <LoadingButton
+              loading={printLoading}
+              loadingPosition="end"
+              endIcon={<FileCopyOutlinedIcon />}
+              variant="contained"
+              onClick={printInvoice}
+              sx={{
+                textTransform: "capitalize",
+                color: colors.grey[100],
+                backgroundColor: colors.blueAccent[700],
+                "&:hover": {
+                  backgroundColor: colors.blueAccent[600],
+                },
+              }}
+            >
+              Print
+            </LoadingButton>
+            <LoadingButton
+              loading={saveLoading}
+              loadingPosition="end"
+              endIcon={<SaveIcon />}
+              variant="contained"
+              onClick={saveInvoice}
+              sx={{
+                textTransform: "capitalize",
+                color: colors.grey[100],
+                backgroundColor: colors.blueAccent[700],
+                "&:hover": {
+                  backgroundColor: colors.blueAccent[600],
+                },
+              }}
+            >
+              Save
+            </LoadingButton>
+            <LoadingButton
+              loading={sendLoading}
+              loadingPosition="end"
+              endIcon={<SendIcon />}
+              variant="contained"
+              onClick={sendInvoice}
+              sx={{
+                textTransform: "capitalize",
+                color: colors.grey[100],
+                minWidth: "150px",
+                backgroundColor: colors.blueAccent[700],
+                "&:hover": {
+                  backgroundColor: colors.blueAccent[600],
+                },
+              }}
+            >
+              Send invoice
+            </LoadingButton>
+          </Box>
         </Box>
       </Box>
 

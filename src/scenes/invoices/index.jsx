@@ -41,8 +41,14 @@ const Invoices = () => {
       flex: 1,
     },
     {
+      field: "dueAmount",
+      headerName: "Due Amount (Rs.)",
+      type: "number",
+      flex: 1,
+    },
+    {
       field: "totalAmount",
-      headerName: "Total Amountt (Rs.)",
+      headerName: "Total Amount (Rs.)",
       type: "number",
       flex: 1,
     },

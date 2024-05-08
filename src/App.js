@@ -9,6 +9,7 @@ import NewProduct from "./scenes/new_product";
 import EditProduct from "./scenes/edit_product";
 import Customer from "./scenes/customer";
 import NewCustomer from "./scenes/new_customer";
+import EditCustomer from "./scenes/edit_customer";
 import Invoices from "./scenes/invoices";
 import PageNotFound from "./scenes/page_not_found";
 import NewInvoice from "./scenes/new_invoice";
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/product-services/:id/edit" element={<EditProduct />} />
                 <Route path="/customer" element={<Customer />} />
                 <Route path="/customer/create-customer" element={<NewCustomer />} />
+                <Route path="/customer/:id/edit" element={<EditCustomer />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path='/invoices/:id/edit' element={<EditInvoice />} />
                 <Route path="/invoices/new_invoice" element={<NewInvoice />} />

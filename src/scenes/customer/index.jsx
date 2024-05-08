@@ -1,7 +1,7 @@
 import { Box, Button, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataCustomer } from "../../data/mockData";
+import { sampleCustomerData } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -23,7 +23,7 @@ const Product = () => {
       flex: 2,
     },
     {
-      field: "phone",
+      field: "contact",
       headerName: "Phone",
       flex: 1,
     },
@@ -98,7 +98,7 @@ const Product = () => {
           }
         }}
       >
-        <DataGrid rows={mockDataCustomer} columns={columns} />
+        <DataGrid rows={sampleCustomerData} columns={columns} />
       </Box>
     </Box>
   );
