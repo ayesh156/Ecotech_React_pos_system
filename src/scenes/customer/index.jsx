@@ -1,7 +1,7 @@
 import { Box, Button, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataProduct } from "../../data/mockData";
+import { mockDataCustomer } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -14,12 +14,22 @@ const Product = () => {
     {
       field: "name",
       headerName: "Name",
-      flex: 4,
+      flex: 1.5,
       cellClassName: "name-column--cell",
     },
     {
-      field: "price",
-      headerName: "Price (Rs.)",
+      field: "email",
+      headerName: "Email",
+      flex: 2,
+    },
+    {
+      field: "phone",
+      headerName: "Phone",
+      flex: 1,
+    },
+    {
+      field: "balance",
+      headerName: "Balance (Rs.)",
       type: "number",
       flex: 1,
     },
@@ -42,8 +52,8 @@ const Product = () => {
       <Box
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
-      <Header title="Product & Services" subtitle="Empowering your needs, delivering exceptional solutions" />
-      <Link to={"/product-services/create-product-service"}>
+      <Header title="Customer" subtitle="Key to business success: loyal customers." />
+      <Link to={"/customer/create-customer"}>
           <Button
             sx={{
               textTransform: "none",
@@ -58,7 +68,7 @@ const Product = () => {
               },
             }}
           >
-            Add Product or service
+            Add Customer
           </Button>
         </Link>
       </Box>
@@ -88,7 +98,7 @@ const Product = () => {
           }
         }}
       >
-        <DataGrid rows={mockDataProduct} columns={columns} />
+        <DataGrid rows={mockDataCustomer} columns={columns} />
       </Box>
     </Box>
   );

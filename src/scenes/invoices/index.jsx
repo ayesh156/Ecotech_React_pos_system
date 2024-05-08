@@ -23,7 +23,6 @@ const Invoices = () => {
   const [showCloseEndDate, setShowCloseEndDate] = useState(false);
 
   const columns = [
-    { field: "id", headerName: "ID", flex: 0.5 },
     { field: "invoiceNumber", headerName: "Invoice Number", flex: 1 },
     {
       field: "customer",

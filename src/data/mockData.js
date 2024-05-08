@@ -1,5 +1,90 @@
 import { tokens } from "../theme";
 
+export const sriLankaProvinces = [
+  "Central",
+  "Eastern",
+  "North Central",
+  "Northern",
+  "North Western",
+  "Sabaragamuwa",
+  "Southern",
+  "Uva",
+  "Western"
+];
+
+export const mockDataCustomer = [
+  {
+    id: 1,
+    name: "Shewan",
+    email: "shewan@gmail.com",
+    phone: "0112322780",
+    balance: "2578"
+  },
+  {
+    id: 2,
+    name: "John",
+    email: "john@example.com",
+    phone: "0123456789",
+    balance: "5000"
+  },
+  {
+    id: 3,
+    name: "Alice",
+    email: "alice@example.com",
+    phone: "0198765432",
+    balance: "3500"
+  },
+  {
+    id: 4,
+    name: "Bob",
+    email: "bob@example.com",
+    phone: "0187654321",
+    balance: "4200"
+  },
+  {
+    id: 5,
+    name: "Emma",
+    email: "emma@example.com",
+    phone: "0133333333",
+    balance: "2800"
+  },
+  {
+    id: 6,
+    name: "David",
+    email: "david@example.com",
+    phone: "0177777777",
+    balance: "2000"
+  },
+  {
+    id: 7,
+    name: "Sophia",
+    email: "sophia@example.com",
+    phone: "0166666666",
+    balance: "3200"
+  },
+  {
+    id: 8,
+    name: "Michael",
+    email: "michael@example.com",
+    phone: "0155555555",
+    balance: "4500"
+  },
+  {
+    id: 9,
+    name: "Olivia",
+    email: "olivia@example.com",
+    phone: "0144444444",
+    balance: "3900"
+  },
+  {
+    id: 10,
+    name: "James",
+    email: "james@example.com",
+    phone: "0101010101",
+    balance: "6000"
+  }
+];
+
 export const mockDataProduct = [
   {
     id: 1,

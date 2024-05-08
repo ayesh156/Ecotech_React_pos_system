@@ -110,7 +110,7 @@ const Edit_Product = () => {
           }}
         >
           <KeyboardArrowLeftOutlinedIcon sx={{fontSize: "35px"}} />
-          <Typography variant="h3" fontWeight="bold" textTransform={"capitalize"} color={colors.grey[100]}>New Product & Service</Typography>
+          <Typography variant="h3" fontWeight="bold" textTransform={"capitalize"} color={colors.grey[100]}>Edit Product & Service</Typography>
           
         </Button>
       <Formik
