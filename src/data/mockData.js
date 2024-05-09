@@ -1,5 +1,13 @@
 import { tokens } from "../theme";
 
+export const user = {
+  image: "../assets/profile.png",
+  name: "Sujith Liyanage",
+  address: "Diddenipotha, Mulatiyana, Makandura",
+  email: "sujith@gmail.com",
+  contact: "0712053987",
+}
+
 export const sriLankaProvinces = [
   "Central",
   "Eastern",
@@ -285,7 +293,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 1,
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -317,7 +325,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 2,
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -349,7 +357,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 4,
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -381,7 +389,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 3,
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -413,7 +421,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 6,
     selectedDate: "2024-04-11",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -445,7 +453,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 5,
     selectedDate: "2024-03-21",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -477,7 +485,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 8,
     selectedDate: "2024-04-21",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -509,7 +517,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 10,
     selectedDate: "2024-04-10",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",
@@ -541,7 +549,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 7,
     selectedDate: "2024-05-01",
     selectedDueDate: "2024-05-20",
     summary: "Sample Summary",
@@ -573,7 +581,7 @@ export const mockInvoices = [
         amount: 500
       }
     ],
-    selectedCustomer: "Shawshank",
+    customerId: 9,
     selectedDate: "2024-04-01",
     selectedDueDate: "2024-05-31",
     summary: "Sample Summary",

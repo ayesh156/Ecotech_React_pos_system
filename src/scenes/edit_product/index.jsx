@@ -13,7 +13,6 @@ import SaveIcon from '@mui/icons-material/Save';
 import Loader from "../../components/Loader";
 import PageNotFound from "../page_not_found";
 
-
 const userSchema = yup.object().shape({
   name: yup.string().required("required"),
   description: yup.string().required("required"),

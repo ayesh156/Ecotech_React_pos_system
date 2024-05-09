@@ -1,14 +1,17 @@
 import { Box, Button, useTheme } from "@mui/material";
+import { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import { sampleCustomerData } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
+import Loader from "../../components/Loader";
 
 const Product = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
 
   const columns = [
     {
@@ -46,6 +49,16 @@ const Product = () => {
       ),
     },
   ];
+
+  useEffect(() => {
+    setTimeout(() => {
+      setInitialValuesSet(true);
+    }, 500);
+  }, []);
+
+  if (!initialValuesSet) {
+    return <Loader />;
+  }
 
   return (
     <Box m="20px">

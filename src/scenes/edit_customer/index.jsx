@@ -44,7 +44,6 @@ const Edit_Customer = () => {
   const [initialValuesSet, setInitialValuesSet] = useState(false);
   const [resultFound, setResultFound] = useState(false);
 
-
   const setInitialFormValues = (customer) => {
     // Set initial form values with customer data
     initialFormValues.name = customer.name;

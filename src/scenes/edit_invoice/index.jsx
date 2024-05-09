@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataInvoices } from "../../data/mockData";
 import { useState, useEffect, useCallback } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -27,7 +26,11 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { useNavigate, useParams } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
-import { mockInvoices } from "../../data/mockData";
+import {
+  mockInvoices,
+  sampleCustomerData,
+  mockDataProduct,
+} from "../../data/mockData";
 import Loader from "../../components/Loader";
 import dayjs from "dayjs";
 import PageNotFound from "../page_not_found";
@@ -39,38 +42,20 @@ import * as yup from "yup";
 import SendIcon from "@mui/icons-material/Send";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 
-const data = { names: ["Shawshank", "Chathuranga", "Malaka"] };
-
 const customerInitialValues = {
   name: "",
-  email: "",
-  contact: "",
 };
-
-const phoneRegExp = /^[0]{1}[147]{1}[01245678]{1}[0-9]{7}$/;
 
 const customerSchema = yup.object().shape({
   name: yup.string().required("required"),
-  email: yup.string().email("invalid email").required("required"),
-  contact: yup
-    .string()
-    .matches(phoneRegExp, "Phone number is not valid")
-    .required("required"),
 });
 
 const productInitialValues = {
   name: "",
-  description: "",
-  price: "",
 };
 
 const productSchema = yup.object().shape({
   name: yup.string().required("required"),
-  description: yup.string().required("required"),
-  price: yup
-    .number()
-    .required("Price is required")
-    .typeError("Price  is not valid"),
 });
 
 const Edit_invoice = () => {
@@ -85,6 +70,7 @@ const Edit_invoice = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedDueDate, setSelectedDueDate] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [customerId, setCustomerId] = useState(null);
   const [isCustomerError, setIsCustomerError] = useState(false);
   const [isDateError, setIsDateError] = useState(false);
   const [isDueDateError, setIsDueDateError] = useState(false);
@@ -106,7 +92,7 @@ const Edit_invoice = () => {
 
   const { id } = useParams();
 
-  const handlePaidAmountChange = (event) => {
+  const paidAmountChange = (event) => {
     const amount = parseFloat(event.target.value);
     if (!isNaN(amount)) {
       setPaidAmount(amount);
@@ -117,12 +103,8 @@ const Edit_invoice = () => {
 
   const payableAmount = paidAmount - totalAmount;
 
-  const handleDeleteRow = (idToDelete) => {
+  const deleteRow = (idToDelete) => {
     setGridRows((prevRows) => prevRows.filter((row) => row.id !== idToDelete));
-  };
-
-  const handleClose = () => {
-    setOpen(false);
   };
 
   const columns = [
@@ -172,7 +154,7 @@ const Edit_invoice = () => {
       headerName: "Delete",
       flex: 0.5,
       renderCell: (params) => (
-        <Button onClick={() => handleDeleteRow(params.row.id)}>
+        <Button onClick={() => deleteRow(params.row.id)}>
           <DeleteIcon style={{ color: colors.redAccent[500] }} />
         </Button>
       ),
@@ -182,7 +164,12 @@ const Edit_invoice = () => {
       headerName: "Edit",
       flex: 0.5,
       renderCell: (params) => (
-        <Button onClick={() => handleEditRow(params.row)}>
+        <Button
+          onClick={() => {
+            setOpen(true);
+            setSelectedRow(params.row);
+          }}
+        >
           <EditIcon style={{ color: colors.blueAccent[500] }} />
         </Button>
       ),
@@ -198,7 +185,6 @@ const Edit_invoice = () => {
       setResultFound(true);
       setGridRows(product.productTable);
       setTotalAmount(calculateTotalAmount(product.productTable));
-      setCustomer(product.selectedCustomer);
       setSelectedDate(product.selectedDate);
       setSelectedDueDate(product.selectedDueDate);
       setSummary(product.summary);
@@ -207,6 +193,16 @@ const Edit_invoice = () => {
       setPaymentInstructions(product.paymentInstructions);
       setFooterNotes(product.footerNotes);
       setPaidAmount(product.paidAmount);
+
+      const customerData = sampleCustomerData.find(
+        (customer) => customer.id === product.customerId
+      );
+
+      // Set the customer name if customerData is found
+      if (customerData) {
+        setCustomer(customerData.name);
+        setCustomerId(customerData.id);
+      }
 
       setTimeout(() => {
         setInitialValuesSet(true);
@@ -245,9 +241,6 @@ const Edit_invoice = () => {
   }, [gridRows]);
 
   const collectData = () => {
-    // Collect values from Autocomplete
-    const selectedCustomer = customer;
-
     //     // Collect values from Datepickers
     const selectedDateValue = selectedDate
       ? dayjs(selectedDate).format("YYYY-MM-DD")
@@ -268,7 +261,7 @@ const Edit_invoice = () => {
 
     // Combine all collected values into one object
     const collectedData = {
-      selectedCustomer,
+      customerId,
       summary,
       invoiceNumber,
       notes,
@@ -277,7 +270,7 @@ const Edit_invoice = () => {
       selectedDate: selectedDateValue,
       selectedDueDate: selectedDueDateValue,
       paidAmount,
-      productTable
+      productTable,
     };
 
     return collectedData;
@@ -372,13 +365,13 @@ const Edit_invoice = () => {
     id: "",
     name: null,
     description: "",
-    qty: "",
-    price: "",
+    qty: "0",
+    price: "0",
     tax: "",
     amount: "",
   });
 
-  const handleButtonClick = () => {
+  const addAnotherProduct = () => {
     const newId = lastId + 1;
     const parsedQty =
       newRow.qty.trim() !== "" && parseFloat(newRow.qty) >= 0
@@ -409,8 +402,8 @@ const Edit_invoice = () => {
       id: newId,
       name: null,
       description: "",
-      qty: "",
-      price: "",
+      qty: "0",
+      price: "0",
       tax: "",
       amount: "",
     });
@@ -435,12 +428,7 @@ const Edit_invoice = () => {
     return totalAmount;
   };
 
-  const handleEditRow = (row) => {
-    setOpen(true);
-    setSelectedRow(row);
-  };
-
-  const handleSaveEdit = () => {
+  const saveEditedRow = () => {
     if (selectedRow) {
       const updatedRows = gridRows.map((row) =>
         row.id === selectedRow.id
@@ -551,11 +539,25 @@ const Edit_invoice = () => {
               <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={data.names}
-                value={customer}
+                options={sampleCustomerData}
+                value={
+                  customer
+                    ? sampleCustomerData.find(
+                        (option) => option.name === customer
+                      )
+                    : null
+                }
+                getOptionLabel={(option) => option.name}
                 onChange={(event, newValue) => {
-                  setCustomer(newValue);
-                  setIsCustomerError(newValue === null);
+                  if (newValue) {
+                    setCustomer(newValue.name);
+                    setCustomerId(newValue.id);
+                    setIsCustomerError(false);
+                  } else {
+                    setCustomer("");
+                    setCustomerId("");
+                    setIsCustomerError(true);
+                  }
                 }}
                 sx={{ position: "relative", width: "180px" }}
                 renderInput={(params) => (
@@ -566,8 +568,8 @@ const Edit_invoice = () => {
                         sx={{
                           color: colors.redAccent[500],
                           marginLeft: "10px",
-                          position: "absolute", // Set position absolute
-                          bottom: -20, // Adjust this value as needed
+                          position: "absolute",
+                          bottom: -20,
                           left: 0,
                         }}
                       >
@@ -681,10 +683,10 @@ const Edit_invoice = () => {
                     </Button>
                     <Autocomplete
                       key={fieldName}
-                      options={mockDataInvoices}
+                      options={mockDataProduct}
                       value={
                         newRow.name
-                          ? mockDataInvoices.find(
+                          ? mockDataProduct.find(
                               (option) => option.name === newRow.name
                             )
                           : null
@@ -695,11 +697,17 @@ const Edit_invoice = () => {
                           setNewRow((prevRow) => ({
                             ...prevRow,
                             name: newValue.name,
+                            description: newValue.description,
+                            price: newValue.price.toString(),
+                            qty: "1",
+                          }));
+                        } else {
+                          setNewRow((prevRow) => ({
+                            ...prevRow,
+                            name: "",
                             description: "",
-                            qty: "",
                             price: "",
-                            tax: "",
-                            amount: "",
+                            qty: "",
                           }));
                         }
                       }}
@@ -806,12 +814,17 @@ const Edit_invoice = () => {
                 color: colors.redAccent[400],
               },
             }}
-            onClick={handleButtonClick}
+            onClick={addAnotherProduct}
           >
             <AddIcon /> Add another product
           </Button>
           <Box display="flex" justifyContent="space-between" py={2}>
-            <Box display="flex" justifyContent="space-between"  minWidth="260px" py={2}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              minWidth="260px"
+              py={2}
+            >
               <Typography variant="h5" mr={1}>
                 Total Amount :
               </Typography>
@@ -825,9 +838,15 @@ const Edit_invoice = () => {
               sx={{ alignSelf: "flex-end", marginBottom: "6px" }}
               value={paidAmount}
               size="small"
-              onChange={handlePaidAmountChange}
+              onChange={paidAmountChange}
             />
-            <Box display="flex" justifyContent="space-between" minWidth="230px" ml={2} py={2}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              minWidth="230px"
+              ml={2}
+              py={2}
+            >
               <Typography variant="h5" mr={1}>
                 Due Amount:
               </Typography>
@@ -1046,13 +1065,12 @@ const Edit_invoice = () => {
             </DialogContent>
           )}
           <DialogActions>
-            <Button onClick={handleClose} sx={{ color: colors.primary[100] }}>
+            <Button onClick={() => {
+              setOpen(false);
+            }} sx={{ color: colors.primary[100] }}>
               Close
             </Button>
-            <Button
-              onClick={handleSaveEdit}
-              sx={{ color: colors.primary[100] }}
-            >
+            <Button onClick={saveEditedRow} sx={{ color: colors.primary[100] }}>
               Submit
             </Button>
           </DialogActions>
@@ -1120,8 +1138,6 @@ const Edit_invoice = () => {
                         onChange={handleChange}
                         value={values.description}
                         name="description"
-                        error={!!touched.description && !!errors.description}
-                        helperText={touched.description && errors.description}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1138,8 +1154,6 @@ const Edit_invoice = () => {
                         onChange={handleChange}
                         value={values.price}
                         name="price"
-                        error={!!touched.price && !!errors.price}
-                        helperText={touched.price && errors.price}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1242,8 +1256,6 @@ const Edit_invoice = () => {
                         onChange={handleChange}
                         value={values.email}
                         name="email"
-                        error={!!touched.email && !!errors.email}
-                        helperText={touched.email && errors.email}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1260,8 +1272,6 @@ const Edit_invoice = () => {
                         onChange={handleChange}
                         value={values.contact}
                         name="contact"
-                        error={!!touched.contact && !!errors.contact}
-                        helperText={touched.contact && errors.contact}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {

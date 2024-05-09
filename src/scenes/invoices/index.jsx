@@ -11,6 +11,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
+import Loader from "../../components/Loader";
 
 const Invoices = () => {
   const theme = useTheme();
@@ -21,6 +22,7 @@ const Invoices = () => {
   const [filteredData, setFilteredData] = useState(mockDataContacts);
   const [showCloseStartDate, setShowCloseStartDate] = useState(false);
   const [showCloseEndDate, setShowCloseEndDate] = useState(false);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
 
   const columns = [
     { field: "invoiceNumber", headerName: "Invoice Number", flex: 1 },
@@ -65,6 +67,12 @@ const Invoices = () => {
       ),
     },
   ];
+
+  useEffect(() => {
+    setTimeout(() => {
+      setInitialValuesSet(true);
+    }, 500);
+  }, []);
 
   useEffect(() => {
     if (!selectedStartDate) {
@@ -118,6 +126,10 @@ const Invoices = () => {
       setFilteredData(mockDataContacts);
     }
   }, [selectedStartDate, selectedEndDate]);
+
+  if (!initialValuesSet) {
+    return <Loader />;
+  }
 
   return (
     <Box m="20px">

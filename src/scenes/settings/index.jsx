@@ -1,22 +1,22 @@
-import { useState } from "react"; // Make sure you import useState from react
-import { Box, IconButton, TextField, useTheme, Typography } from "@mui/material";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Box,
+  IconButton,
+  TextField,
+  useTheme,
+  Typography,
+} from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
-import ClearIcon from '@mui/icons-material/Clear';
+import ClearIcon from "@mui/icons-material/Clear";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { tokens } from "../../theme";
 import LoadingButton from "@mui/lab/LoadingButton";
-import SaveIcon from '@mui/icons-material/Save';
-
-const initialValues = {
-  name: "",
-  email: "",
-  contact: "",
-  address: "",
-  image: null, // Add image field to initialValues
-};
+import SaveIcon from "@mui/icons-material/Save";
+import Loader from "../../components/Loader";
+import { user } from "../../data/mockData";
 
 const phoneRegExp = /^[0]{1}[147]{1}[01245678]{1}[0-9]{7}$/;
 
@@ -28,53 +28,84 @@ const userSchema = yup.object().shape({
     .matches(phoneRegExp, "Phone number is not valid")
     .required("required"),
   address: yup.string().required("required"),
-  image: yup.mixed().required("Please upload the company logo"), // Add validation for image
+  image: yup.mixed().required("Please upload the company logo"),
 });
 
 const Settings = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const isNonMobile = useMediaQuery("(min-width:800px)");
-  const [selectedImage, setSelectedImage] = useState(null); // Initialize selectedImage state
+  const [selectedImage, setSelectedImage] = useState(null);
   const [fileName, setFileName] = useState("No selected file");
   const [isLoading, setIsLoading] = useState(false);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [initialValues, setInitialValues] = useState({
+    name: "",
+    email: "",
+    contact: "",
+    address: "",
+    image: null,
+  });
 
-  const handleFormSubmit = (values, { resetForm }) => {
+  const getFileNameFromPath = (path) => {
+    const pathSegments = path.split('/');
+    return pathSegments[pathSegments.length - 1];
+  };
+
+  const fetchProduct = useCallback(() => {
+    setInitialValues(user);
+    setSelectedImage(user.image);
+    setFileName(getFileNameFromPath(user.image));
+    setTimeout(()=>{
+      setInitialValuesSet(true);
+    }, 1000)
+  }, [] );
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+  }, [initialValuesSet, fetchProduct]);
+
+  const saveSettings = (values, { resetForm }) => {
     const updatedValues = { ...values, image: selectedImage };
 
     setIsLoading(true);
     setTimeout(() => {
       console.log(updatedValues);
 
-      // Reset form data
-      setSelectedImage(null);
-      setFileName("No selected file");
-
-      resetForm();
-
       setIsLoading(false);
-    }, 1000); // Change the timeout value as needed
+    }, 1000);
   };
 
-  const handleImageChange = (event, setFieldValue) => {
+  const selectImage = (event, setFieldValue) => {
     const file = event.currentTarget.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFieldValue("image", reader.result); // Set image data as base64 string
-        setSelectedImage(reader.result); // Set selected image for preview
+        setFieldValue("image", reader.result);
+        setSelectedImage(reader.result);
         setFileName(file.name);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  if (!initialValuesSet) {
+    return (
+      <Loader />
+    ); 
+  } 
+
   return (
     <Box m="20px">
-      <Header title="General Settings" subtitle="Select your company default logo (225 x 225 pixels)" />
+      <Header
+        title="General Settings"
+        subtitle="Select your company default logo (225 x 225 pixels)"
+      />
 
       <Formik
-        onSubmit={handleFormSubmit}
+        onSubmit={saveSettings}
         initialValues={initialValues}
         validationSchema={userSchema}
       >
@@ -86,7 +117,6 @@ const Settings = () => {
           handleChange,
           handleSubmit,
           setFieldValue,
-          resetForm,
         }) => (
           <form onSubmit={handleSubmit}>
             <Box
@@ -108,13 +138,22 @@ const Settings = () => {
                 }}
               >
                 {selectedImage ? (
-                <IconButton sx={{position: "absolute", top:-35, right: 35}} onClick={() => {
-                    setFileName("No selected file");
-                    setSelectedImage(null);
-                  }}>
-                  <ClearIcon sx={{ fontSize: "25px", color: colors.redAccent[500], fontWeight: "bold" }} />
-                  </IconButton>)
-                  : undefined}
+                  <IconButton
+                    sx={{ position: "absolute", top: -35, right: 35 }}
+                    onClick={() => {
+                      setFileName("No selected file");
+                      setSelectedImage(null);
+                    }}
+                  >
+                    <ClearIcon
+                      sx={{
+                        fontSize: "25px",
+                        color: colors.redAccent[500],
+                        fontWeight: "bold",
+                      }}
+                    />
+                  </IconButton>
+                ) : undefined}
                 <Box
                   className="image-area"
                   style={{
@@ -129,7 +168,7 @@ const Settings = () => {
                     className="input-field"
                     hidden
                     onChange={(event) =>
-                      handleImageChange(event, setFieldValue)
+                      selectImage(event, setFieldValue)
                     }
                   />
                   {selectedImage ? (
@@ -242,29 +281,28 @@ const Settings = () => {
                 }}
               />
               <LoadingButton
-              loading={isLoading}
-              loadingPosition="end"
-              endIcon={<SaveIcon />}
-              variant="contained"
-              type="submit"
-              sx={{
-                gridColumn: "span 4",
-                marginTop: "15px",
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                fontSize: "17px",
-                fontWeight: "500",
-                paddingY: "10px",
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Save all changes
-            </LoadingButton>
+                loading={isLoading}
+                loadingPosition="end"
+                endIcon={<SaveIcon />}
+                variant="contained"
+                type="submit"
+                sx={{
+                  gridColumn: "span 4",
+                  marginTop: "15px",
+                  textTransform: "capitalize",
+                  color: colors.grey[100],
+                  fontSize: "17px",
+                  fontWeight: "500",
+                  paddingY: "10px",
+                  backgroundColor: colors.blueAccent[700],
+                  "&:hover": {
+                    backgroundColor: colors.blueAccent[600],
+                  },
+                }}
+              >
+                Save all changes
+              </LoadingButton>
             </Box>
-            
           </form>
         )}
       </Formik>
