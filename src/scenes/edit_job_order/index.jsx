@@ -11,8 +11,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataProduct, sampleCustomerData } from "../../data/mockData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -25,14 +24,22 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
-import SendIcon from "@mui/icons-material/Send";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
+import {
+  mockInvoices,
+  sampleCustomerData,
+  mockDataProduct,
+} from "../../data/mockData";
+import Loader from "../../components/Loader";
+import dayjs from "dayjs";
+import PageNotFound from "../page_not_found";
 import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
+import SaveIcon from "@mui/icons-material/Save";
 import { Formik } from "formik";
 import * as yup from "yup";
-import SaveIcon from "@mui/icons-material/Save";
+import SendIcon from "@mui/icons-material/Send";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 
 const customerInitialValues = {
@@ -56,7 +63,7 @@ const productSchema = yup.object().shape({
   name: yup.string().required("required"),
 });
 
-const New_Invoice = () => {
+const Edit_Job_Order = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [gridRows, setGridRows] = useState([]);
@@ -73,18 +80,22 @@ const New_Invoice = () => {
   const [isDateError, setIsDateError] = useState(false);
   const [isDueDateError, setIsDueDateError] = useState(false);
   const [summary, setSummary] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [paidAmount, setPaidAmount] = useState("");
+  const [jobOrderNumber, setJobOrderNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [printLoading, setPrintLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [resultFound, setResultFound] = useState(false);
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
+
+  const { id } = useParams();
 
   const paidAmountChange = (event) => {
     const amount = parseFloat(event.target.value);
@@ -170,6 +181,61 @@ const New_Invoice = () => {
     },
   ];
 
+  const fetchProduct = useCallback(() => {
+    const product = mockInvoices.find(
+      (item) => item.invoiceNumber === parseInt(id)
+    );
+
+    if (product) {
+      setResultFound(true);
+      setGridRows(product.productTable);
+      setTotalAmount(calculateTotalAmount(product.productTable));
+      setSelectedDate(product.selectedDate);
+      setSelectedDueDate(product.selectedDueDate);
+      setSummary(product.summary);
+      setJobOrderNumber(product.invoiceNumber);
+      setNotes(product.notes);
+      setPaymentInstructions(product.paymentInstructions);
+      setFooterNotes(product.footerNotes);
+      setPaidAmount(product.paidAmount);
+
+      const customerData = sampleCustomerData.find(
+        (customer) => customer.id === product.customerId
+      );
+
+      // Set the customer name if customerData is found
+      if (customerData) {
+        setCustomer(customerData.name);
+        setCustomerId(customerData.id);
+      }
+
+      setTimeout(() => {
+        setInitialValuesSet(true);
+      }, 1000);
+    } else {
+      console.log("Not Found");
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+  }, [initialValuesSet, fetchProduct]);
+
+  useEffect(() => {
+    if (initialValuesSet) {
+      // Calculate the lastId and set it
+      let maxId = 0;
+      gridRows.forEach((row) => {
+        if (row.id > maxId) {
+          maxId = row.id;
+        }
+      });
+      setLastId(maxId);
+    }
+  }, [initialValuesSet, gridRows]);
+
   useEffect(() => {
     // Calculate total amount whenever gridRows change
     let sum = 0;
@@ -182,10 +248,10 @@ const New_Invoice = () => {
   const collectData = () => {
     // Collect values from Datepickers
     const selectedDateValue = selectedDate
-      ? selectedDate.format("YYYY-MM-DD")
+      ? dayjs(selectedDate).format("YYYY-MM-DD")
       : null;
     const selectedDueDateValue = selectedDueDate
-      ? selectedDueDate.format("YYYY-MM-DD")
+      ? dayjs(selectedDueDate).format("YYYY-MM-DD")
       : null;
 
     // Collect values from DataGrid rows
@@ -202,7 +268,7 @@ const New_Invoice = () => {
     const collectedData = {
       customerId,
       summary,
-      invoiceNumber,
+      jobOrderNumber,
       notes,
       paymentInstructions,
       footerNotes,
@@ -243,7 +309,7 @@ const New_Invoice = () => {
     }, 1000); // Change the timeout value as needed
   };
 
-  const printInvoice = () => {
+  const printJobOrder = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -254,16 +320,15 @@ const New_Invoice = () => {
     setPrintLoading(true);
     setTimeout(() => {
       const collectedData = collectData();
-      console.log(collectedData);
 
-      // Reset form data
-      resetInputs();
+      console.log(id);
+      console.log(collectedData);
 
       setPrintLoading(false);
     }, 1000);
   };
 
-  const sendInvoice = () => {
+  const sendJobOrder = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -274,16 +339,15 @@ const New_Invoice = () => {
     setSendLoading(true);
     setTimeout(() => {
       const collectedData = collectData();
-      console.log(collectedData);
 
-      // Reset form data
-      resetInputs();
+      console.log(id);
+      console.log(collectedData);
 
       setSendLoading(false);
     }, 1000);
   };
 
-  const saveInvoice = () => {
+  const saveJobOrder = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -294,32 +358,12 @@ const New_Invoice = () => {
     setSaveLoading(true);
     setTimeout(() => {
       const collectedData = collectData();
-      console.log(collectedData);
 
-      // Reset form data
-      resetInputs();
+      console.log(id);
+      console.log(collectedData);
 
       setSaveLoading(false);
     }, 1000);
-  };
-
-  const resetInputs = () => {
-    setCustomer(null);
-    setCustomerId(null);
-    setIsCustomerError(false);
-    setSelectedDate(null);
-    setIsDateError(false);
-    setSelectedDueDate(null);
-    setIsDueDateError(null);
-    setSummary("");
-    setInvoiceNumber("");
-    setNotes("");
-    setPaymentInstructions("");
-    setFooterNotes("");
-    setPaidAmount("");
-
-    // Clear table rows
-    setGridRows([]);
   };
 
   const [newRow, setNewRow] = useState({
@@ -372,6 +416,16 @@ const New_Invoice = () => {
     setLastId(newId);
   };
 
+  const calculateTotalAmount = (productTable) => {
+    let total = 0;
+    productTable.forEach((product) => {
+      const amount = product.qty * product.price;
+      const taxAmount = (amount * product.tax) / 100;
+      total += amount - taxAmount;
+    });
+    return total;
+  };
+
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
     const taxAmount = (amount * tax) / 100;
@@ -404,6 +458,12 @@ const New_Invoice = () => {
     setOpen(false);
   };
 
+  if (!resultFound) {
+    return <PageNotFound />;
+  } else if (!initialValuesSet) {
+    return <Loader />;
+  }
+
   return (
     <Box m="20px">
       <Button
@@ -420,7 +480,7 @@ const New_Invoice = () => {
           textTransform={"capitalize"}
           color={colors.grey[100]}
         >
-          New Invoice
+          Edit Job Order
         </Typography>
       </Button>
       <Box
@@ -527,12 +587,12 @@ const New_Invoice = () => {
             </Box>
             <TextField
               color="secondary"
-              label="Invoice number"
+              label="Job Order number"
               fullWidth
               sx={{ alignSelf: "flex-end" }}
-              value={invoiceNumber}
+              value={jobOrderNumber}
               onChange={(event) => {
-                setInvoiceNumber(event.target.value);
+                setJobOrderNumber(event.target.value);
               }}
             />
           </Box>
@@ -540,7 +600,7 @@ const New_Invoice = () => {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={["DatePicker"]}>
                 <DatePicker
-                  value={selectedDate}
+                  value={dayjs(selectedDate)}
                   format="YYYY-MM-DD"
                   onChange={(newValue) => {
                     setSelectedDate(newValue);
@@ -562,7 +622,7 @@ const New_Invoice = () => {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DemoContainer components={["DatePicker"]}>
                 <DatePicker
-                  value={selectedDueDate}
+                  value={dayjs(selectedDueDate)}
                   format="YYYY-MM-DD"
                   onChange={(newValue) => {
                     setSelectedDueDate(newValue);
@@ -793,7 +853,7 @@ const New_Invoice = () => {
               py={2}
             >
               <Typography variant="h5" mr={1}>
-                Due Amount :
+                Due Amount:
               </Typography>
               <Typography variant="h5">
                 LKR {payableAmount.toFixed(2)}
@@ -859,7 +919,7 @@ const New_Invoice = () => {
               loadingPosition="end"
               endIcon={<FileCopyOutlinedIcon />}
               variant="contained"
-              onClick={printInvoice}
+              onClick={printJobOrder}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -876,7 +936,7 @@ const New_Invoice = () => {
               loadingPosition="end"
               endIcon={<SaveIcon />}
               variant="contained"
-              onClick={saveInvoice}
+              onClick={saveJobOrder}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -893,7 +953,7 @@ const New_Invoice = () => {
               loadingPosition="end"
               endIcon={<SendIcon />}
               variant="contained"
-              onClick={sendInvoice}
+              onClick={sendJobOrder}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -904,7 +964,7 @@ const New_Invoice = () => {
                 },
               }}
             >
-              Send invoice
+              Send job order
             </LoadingButton>
           </Box>
         </Box>
@@ -1010,18 +1070,12 @@ const New_Invoice = () => {
             </DialogContent>
           )}
           <DialogActions>
-            <Button
-              onClick={() => {
-                setOpen(false);
-              }}
-              sx={{ color: colors.primary[100] }}
-            >
+            <Button onClick={() => {
+              setOpen(false);
+            }} sx={{ color: colors.primary[100] }}>
               Close
             </Button>
-            <Button
-              onClick={saveEditedRow}
-              sx={{ color: colors.primary[100] }}
-            >
+            <Button onClick={saveEditedRow} sx={{ color: colors.primary[100] }}>
               Submit
             </Button>
           </DialogActions>
@@ -1285,4 +1339,4 @@ const New_Invoice = () => {
   );
 };
 
-export default New_Invoice;
+export default Edit_Job_Order;

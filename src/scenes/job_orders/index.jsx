@@ -13,7 +13,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import Loader from "../../components/Loader";
 
-const Invoices = () => {
+const Job_Orders = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   // State for selected date range and filtered data
@@ -25,7 +25,7 @@ const Invoices = () => {
   const [initialValuesSet, setInitialValuesSet] = useState(false);
 
   const columns = [
-    { field: "invoiceNumber", headerName: "Invoice Number", flex: 1 },
+    { field: "invoiceNumber", headerName: "Job Order Number", flex: 1 },
     {
       field: "customer",
       headerName: "Customer",
@@ -137,10 +137,10 @@ const Invoices = () => {
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
         <Header
-          title="Invoices"
-          subtitle="Effortlessly manage invoices with our intuitive interface."
+          title="Job Orders"
+          subtitle="Tasks assigned, deadlines set, work begins."
         />
-        <Link to={"/invoices/create-invoice"}>
+        <Link to={"/job-orders/create-job-order"}>
           <Button
             sx={{
               textTransform: "none",
@@ -155,7 +155,7 @@ const Invoices = () => {
               },
             }}
           >
-            Create new invoice
+            Create an Job Order
           </Button>
         </Link>
       </Box>
@@ -275,4 +275,4 @@ const Invoices = () => {
   );
 };
 
-export default Invoices;
+export default Job_Orders;

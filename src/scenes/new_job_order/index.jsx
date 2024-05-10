@@ -56,7 +56,7 @@ const productSchema = yup.object().shape({
   name: yup.string().required("required"),
 });
 
-const New_Invoice = () => {
+const New_Job_Order = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [gridRows, setGridRows] = useState([]);
@@ -73,7 +73,7 @@ const New_Invoice = () => {
   const [isDateError, setIsDateError] = useState(false);
   const [isDueDateError, setIsDueDateError] = useState(false);
   const [summary, setSummary] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [jobOrderNumber, setJobOrderNumber] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
@@ -202,7 +202,7 @@ const New_Invoice = () => {
     const collectedData = {
       customerId,
       summary,
-      invoiceNumber,
+      jobOrderNumber,
       notes,
       paymentInstructions,
       footerNotes,
@@ -243,7 +243,7 @@ const New_Invoice = () => {
     }, 1000); // Change the timeout value as needed
   };
 
-  const printInvoice = () => {
+  const printJobOrder = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -263,7 +263,7 @@ const New_Invoice = () => {
     }, 1000);
   };
 
-  const sendInvoice = () => {
+  const sendJobOrder = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -283,7 +283,7 @@ const New_Invoice = () => {
     }, 1000);
   };
 
-  const saveInvoice = () => {
+  const saveJobOrder = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -312,7 +312,7 @@ const New_Invoice = () => {
     setSelectedDueDate(null);
     setIsDueDateError(null);
     setSummary("");
-    setInvoiceNumber("");
+    setJobOrderNumber("");
     setNotes("");
     setPaymentInstructions("");
     setFooterNotes("");
@@ -420,7 +420,7 @@ const New_Invoice = () => {
           textTransform={"capitalize"}
           color={colors.grey[100]}
         >
-          New Invoice
+          New Job Order
         </Typography>
       </Button>
       <Box
@@ -527,12 +527,12 @@ const New_Invoice = () => {
             </Box>
             <TextField
               color="secondary"
-              label="Invoice number"
+              label="Job Order number"
               fullWidth
               sx={{ alignSelf: "flex-end" }}
-              value={invoiceNumber}
+              value={jobOrderNumber}
               onChange={(event) => {
-                setInvoiceNumber(event.target.value);
+                setJobOrderNumber(event.target.value);
               }}
             />
           </Box>
@@ -859,7 +859,7 @@ const New_Invoice = () => {
               loadingPosition="end"
               endIcon={<FileCopyOutlinedIcon />}
               variant="contained"
-              onClick={printInvoice}
+              onClick={printJobOrder}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -876,7 +876,7 @@ const New_Invoice = () => {
               loadingPosition="end"
               endIcon={<SaveIcon />}
               variant="contained"
-              onClick={saveInvoice}
+              onClick={saveJobOrder}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -893,7 +893,7 @@ const New_Invoice = () => {
               loadingPosition="end"
               endIcon={<SendIcon />}
               variant="contained"
-              onClick={sendInvoice}
+              onClick={sendJobOrder}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -904,7 +904,7 @@ const New_Invoice = () => {
                 },
               }}
             >
-              Send invoice
+              Send Job Order
             </LoadingButton>
           </Box>
         </Box>
@@ -1285,4 +1285,4 @@ const New_Invoice = () => {
   );
 };
 
-export default New_Invoice;
+export default New_Job_Order;

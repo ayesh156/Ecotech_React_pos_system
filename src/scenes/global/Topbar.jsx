@@ -39,12 +39,11 @@ const Topbar = () => {
             <DarkModeOutlinedIcon />
           )}
         </IconButton>
+        <Link to="/faq" style={{ textDecoration: 'none' }}>
         <IconButton>
           <NotificationsOutlinedIcon />
         </IconButton>
-        <IconButton>
-        <SettingsOutlinedIcon />
-        </IconButton>
+        </Link>
         <Link to="/settings" style={{ textDecoration: 'none' }}>
         <IconButton>
           <ManageAccountsOutlinedIcon />

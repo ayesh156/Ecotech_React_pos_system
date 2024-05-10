@@ -2,7 +2,7 @@ import { Box, useTheme, Button, IconButton } from "@mui/material";
 import { useState, useEffect } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataContacts } from "../../data/mockData";
+import { sampleEstimatesData } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -13,19 +13,19 @@ import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import Loader from "../../components/Loader";
 
-const Invoices = () => {
+const Estimates = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   // State for selected date range and filtered data
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
-  const [filteredData, setFilteredData] = useState(mockDataContacts);
+  const [filteredData, setFilteredData] = useState(sampleEstimatesData);
   const [showCloseStartDate, setShowCloseStartDate] = useState(false);
   const [showCloseEndDate, setShowCloseEndDate] = useState(false);
   const [initialValuesSet, setInitialValuesSet] = useState(false);
 
   const columns = [
-    { field: "invoiceNumber", headerName: "Invoice Number", flex: 1 },
+    { field: "estimateNumber", headerName: "Estimate Number", flex: 1 },
     {
       field: "customer",
       headerName: "Customer",
@@ -43,14 +43,8 @@ const Invoices = () => {
       flex: 1,
     },
     {
-      field: "dueAmount",
-      headerName: "Due Amount (Rs.)",
-      type: "number",
-      flex: 1,
-    },
-    {
-      field: "totalAmount",
-      headerName: "Total Amount (Rs.)",
+      field: "amount",
+      headerName: "Amount (Rs.)",
       type: "number",
       flex: 1,
     },
@@ -113,7 +107,7 @@ const Invoices = () => {
         selectedEndDate.$D
       );
 
-      const filtered = mockDataContacts.filter((item) => {
+      const filtered = sampleEstimatesData.filter((item) => {
         // Convert item.date to a Date object
         const itemDate = new Date(item.date);
 
@@ -123,7 +117,7 @@ const Invoices = () => {
 
       setFilteredData(filtered);
     } else {
-      setFilteredData(mockDataContacts);
+      setFilteredData(sampleEstimatesData);
     }
   }, [selectedStartDate, selectedEndDate]);
 
@@ -137,10 +131,10 @@ const Invoices = () => {
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
         <Header
-          title="Invoices"
-          subtitle="Effortlessly manage invoices with our intuitive interface."
+          title="Estimates"
+          subtitle="Streamline project budgeting with detailed estimates."
         />
-        <Link to={"/invoices/create-invoice"}>
+        <Link to={"/estimates/create-estimate"}>
           <Button
             sx={{
               textTransform: "none",
@@ -155,7 +149,7 @@ const Invoices = () => {
               },
             }}
           >
-            Create new invoice
+            Create an estimate
           </Button>
         </Link>
       </Box>
@@ -275,4 +269,4 @@ const Invoices = () => {
   );
 };
 
-export default Invoices;
+export default Estimates;

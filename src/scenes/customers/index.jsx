@@ -66,7 +66,7 @@ const Product = () => {
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
       <Header title="Customer" subtitle="Key to business success: loyal customers." />
-      <Link to={"/customer/create-customer"}>
+      <Link to={"/customers/create-customer"}>
           <Button
             sx={{
               textTransform: "none",

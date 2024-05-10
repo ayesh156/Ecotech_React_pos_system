@@ -20,6 +20,172 @@ export const sriLankaProvinces = [
   "Western"
 ];
 
+export const sampleEstimatesData = [
+  {
+    id: 1,
+    estimateNumber: "2001",
+    customer: "Chathura",
+    date: "2024-05-06",
+    dueDate: "2024-06-20",
+    amount: "2000",
+  },
+  {
+    id: 2,
+    estimateNumber: "2002",
+    customer: "John Doe",
+    date: "2024-05-07",
+    dueDate: "2024-05-21",
+    amount: "2500",
+  },
+  {
+    id: 3,
+    estimateNumber: "2003",
+    customer: "Jane Smith",
+    date: "2024-05-08",
+    dueDate: "2024-05-22",
+    amount: "1800",
+  },
+  {
+    id: 4,
+    estimateNumber: "2004",
+    customer: "Alice Johnson",
+    date: "2024-05-09",
+    dueDate: "2024-05-23",
+    amount: "3000",
+  },
+  {
+    id: 5,
+    estimateNumber: "2005",
+    customer: "Bob Brown",
+    date: "2024-05-10",
+    dueDate: "2024-05-24",
+    amount: "2200",
+  },
+  {
+    id: 6,
+    estimateNumber: "2006",
+    customer: "Emma Garcia",
+    date: "2024-05-21",
+    dueDate: "2024-06-25",
+    amount: "2700",
+  },
+  {
+    id: 7,
+    estimateNumber: "2007",
+    customer: "Michael Wilson",
+    date: "2024-06-12",
+    dueDate: "2020-06-26",
+    amount: "1900",
+  },
+  {
+    id: 8,
+    estimateNumber: "2008",
+    customer: "Olivia Martinez",
+    date: "2024-04-13",
+    dueDate: "2024-04-27",
+    amount: "3200",
+  },
+  {
+    id: 9,
+    estimateNumber: "2009",
+    customer: "William Anderson",
+    date: "2024-03-14",
+    dueDate: "2024-04-28",
+    amount: "2400",
+  },
+  {
+    id: 10,
+    estimateNumber: "2010",
+    customer: "Sophia Lee",
+    date: "2024-03-15",
+    dueDate: "2024-03-29",
+    amount: "2800",
+  },
+];
+
+export const sampleJobNotesData = [
+  {
+    id: 1,
+    jobNoteNumber: "2001",
+    customer: "Chathura",
+    date: "2024-05-06",
+    dueDate: "2024-06-20",
+    amount: "2000",
+  },
+  {
+    id: 2,
+    jobNoteNumber: "2002",
+    customer: "John Doe",
+    date: "2024-05-07",
+    dueDate: "2024-05-21",
+    amount: "2500",
+  },
+  {
+    id: 3,
+    jobNoteNumber: "2003",
+    customer: "Jane Smith",
+    date: "2024-05-08",
+    dueDate: "2024-05-22",
+    amount: "1800",
+  },
+  {
+    id: 4,
+    jobNoteNumber: "2004",
+    customer: "Alice Johnson",
+    date: "2024-05-09",
+    dueDate: "2024-05-23",
+    amount: "3000",
+  },
+  {
+    id: 5,
+    jobNoteNumber: "2005",
+    customer: "Bob Brown",
+    date: "2024-05-10",
+    dueDate: "2024-05-24",
+    amount: "2200",
+  },
+  {
+    id: 6,
+    jobNoteNumber: "2006",
+    customer: "Emma Garcia",
+    date: "2024-05-21",
+    dueDate: "2024-06-25",
+    amount: "2700",
+  },
+  {
+    id: 7,
+    jobNoteNumber: "2007",
+    customer: "Michael Wilson",
+    date: "2024-06-12",
+    dueDate: "2020-06-26",
+    amount: "1900",
+  },
+  {
+    id: 8,
+    jobNoteNumber: "2008",
+    customer: "Olivia Martinez",
+    date: "2024-04-13",
+    dueDate: "2024-04-27",
+    amount: "3200",
+  },
+  {
+    id: 9,
+    jobNoteNumber: "2009",
+    customer: "William Anderson",
+    date: "2024-03-14",
+    dueDate: "2024-04-28",
+    amount: "2400",
+  },
+  {
+    id: 10,
+    jobNoteNumber: "2010",
+    customer: "Sophia Lee",
+    date: "2024-03-15",
+    dueDate: "2024-03-29",
+    amount: "2800",
+  },
+];
+
 export const sampleCustomerData = [
   {
     id: 1,
@@ -208,62 +374,678 @@ export const mockDataProduct = [
     id: 1,
     name: "Keyboard",
     description: "A high-quality keyboard for efficient typing.",
-    price: 35000,
+    buyingPrice: 5000,
+    sellingPrice: 5400,
   },
   {
     id: 2,
     name: "Mouse",
     description: "A comfortable and precise mouse for smooth navigation.",
-    price: 25000
+    buyingPrice: 2000,
+    sellingPrice: 2400,
   },
   {
     id: 3,
     name: "Monitor",
     description: "A large, high-resolution monitor for immersive viewing experience.",
-    price: 60000
+    buyingPrice: 2100,
+    sellingPrice: 2400,
   },
   {
     id: 4,
     name: "CPU (Central Processing Unit)",
     description: "The brain of your computer, responsible for executing tasks.",
-    price: 80000
+    buyingPrice: 41000,
+    sellingPrice: 4500,
   },
   {
     id: 5,
     name: "RAM (Random Access Memory)",
     description: "Fast memory for quick access to frequently used data.",
-    price: 40000
+    buyingPrice: 5000,
+    sellingPrice: 5600,
   },
   {
     id: 6,
     name: "Hard Drive (HDD)",
     description: "High-capacity storage for your files and applications.",
-    price: 50000
+    buyingPrice: 2000,
+    sellingPrice: 2500,
   },
   {
     id: 7,
     name: "Solid State Drive (SSD)",
     description: "Lightning-fast storage with no moving parts.",
-    price: 70000
+    buyingPrice: 7000,
+    sellingPrice: 7400,
   },
   {
     id: 8,
     name: "Graphics Card",
     description: "Delivers stunning visuals and smooth gaming performance.",
-    price: 90000
+    buyingPrice: 30000,
+    sellingPrice: 32400,
   },
   {
     id: 9,
     name: "Motherboard",
     description: "Connects and coordinates all components of your computer.",
-    price: 55000
+    buyingPrice: 8000,
+    sellingPrice: 8500,
   },
   {
     id: 10,
     name: "Power Supply Unit (PSU)",
     description: "Provides stable power to all components of your computer.",
-    price: 30000
+    buyingPrice: 1500,
+    sellingPrice: 1800,
   }
+];
+
+export const mockEstimate = [
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 1",
+    estimateNumber: 1,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 2",
+    estimateNumber: 2,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 1",
+    estimateNumber: 3,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 2",
+    estimateNumber: 4,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 1",
+    estimateNumber: 5,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 1",
+    estimateNumber: 6,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 2",
+    estimateNumber: 7,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 2",
+    estimateNumber: 8,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 1",
+    estimateNumber: 9,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    estimateName: "Sample Estimate 2",
+    estimateNumber: 10,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Estimate",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+];
+
+export const mockJobNote = [
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 1",
+    jobNoteNumber: 1,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 2",
+    jobNoteNumber: 2,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 1",
+    jobNoteNumber: 3,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 2",
+    jobNoteNumber: 4,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 1",
+    jobNoteNumber: 5,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 1",
+    jobNoteNumber: 6,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 2",
+    jobNoteNumber: 7,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 2",
+    jobNoteNumber: 8,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 1",
+    jobNoteNumber: 9,
+    notes: "Sample Notes 1",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
+  {
+    customerId: 3,
+    jobNoteName: "Sample Job Note 2",
+    jobNoteNumber: 10,
+    notes: "Sample Notes 2",
+    subhead: "Subhead Job Note",
+    selectedDate: "2024-05-01",
+    selectedDueDate: "2024-06-07",
+    paidAmount: 9000,
+    productTable: [
+      {
+        id: 1,
+        name: "Keyboard",
+        description: "A high-quality keyboard for efficient typing.",
+        qty: 1,
+        price: 5000,
+        tax: 2,
+        amount: 4900
+      },
+      {
+        id: 2,
+        name: "Mouse",
+        description: "A comfortable and precise mouse for smooth navigation.",
+        qty: 2,
+        price: 2000,
+        tax: 5,
+        amount: 3800
+      }
+    ]
+  },
 ];
 
 export const mockInvoices = [

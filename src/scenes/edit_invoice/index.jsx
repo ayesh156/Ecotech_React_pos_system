@@ -44,6 +44,8 @@ import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 
 const customerInitialValues = {
   name: "",
+  email: "",
+  contact: "",
 };
 
 const customerSchema = yup.object().shape({
@@ -52,13 +54,16 @@ const customerSchema = yup.object().shape({
 
 const productInitialValues = {
   name: "",
+  description: "",
+  buyingPrice: "",
+  sellingPrice: "",
 };
 
 const productSchema = yup.object().shape({
   name: yup.string().required("required"),
 });
 
-const Edit_invoice = () => {
+const Edit_Invoice = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [gridRows, setGridRows] = useState([]);
@@ -698,7 +703,7 @@ const Edit_invoice = () => {
                             ...prevRow,
                             name: newValue.name,
                             description: newValue.description,
-                            price: newValue.price.toString(),
+                            price: newValue.sellingPrice.toString(),
                             qty: "1",
                           }));
                         } else {
@@ -1149,11 +1154,27 @@ const Edit_invoice = () => {
                         fullWidth
                         variant="filled"
                         type="text"
-                        label="Price"
+                        label="Buying Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.price}
-                        name="price"
+                        value={values.buyingPrice}
+                        name="buyingPrice"
+                        sx={{
+                          gridColumn: "span 4",
+                          "& .MuiInputLabel-root.Mui-focused": {
+                            color: colors.primary[100],
+                          },
+                        }}
+                      />
+                      <TextField
+                        fullWidth
+                        variant="filled"
+                        type="text"
+                        label="Selling Price"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        value={values.sellingPrice}
+                        name="sellingPrice"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1318,4 +1339,4 @@ const Edit_invoice = () => {
   );
 };
 
-export default Edit_invoice;
+export default Edit_Invoice;

@@ -21,7 +21,7 @@ const Product = () => {
       cellClassName: "name-column--cell",
     },
     {
-      field: "price",
+      field: "sellingPrice",
       headerName: "Price (Rs.)",
       type: "number",
       flex: 1,

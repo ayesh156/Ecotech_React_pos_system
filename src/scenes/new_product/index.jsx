@@ -1,7 +1,6 @@
 import { useState } from "react"; // Make sure you import useState from react
 import { Box, TextField, useTheme, Typography, Button } from "@mui/material";
 import { Formik } from "formik";
-import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useNavigate } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
@@ -12,17 +11,9 @@ import SaveIcon from "@mui/icons-material/Save";
 const initialValues = {
   name: "",
   description: "",
-  price: "",
+  buyingPrice: "",
+  sellingPrice: "",
 };
-
-const userSchema = yup.object().shape({
-  name: yup.string().required("required"),
-  description: yup.string().required("required"),
-  price: yup
-    .number()
-    .required("Price is required")
-    .typeError("Price  is not valid"),
-});
 
 const New_Product = () => {
   const theme = useTheme();
@@ -66,7 +57,6 @@ const New_Product = () => {
       <Formik
         onSubmit={saveProduct}
         initialValues={initialValues}
-        validationSchema={userSchema}
       >
         {({
           values,
@@ -117,8 +107,6 @@ const New_Product = () => {
                 onChange={handleChange}
                 value={values.description}
                 name="description"
-                error={!!touched.description && !!errors.description}
-                helperText={touched.description && errors.description}
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -130,13 +118,27 @@ const New_Product = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Price"
+                label="Buying Price"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.price}
-                name="price"
-                error={!!touched.price && !!errors.price}
-                helperText={touched.price && errors.price}
+                value={values.buyingPrice}
+                name="buyingPrice"
+                sx={{
+                  gridColumn: "span 4",
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: colors.primary[100],
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="filled"
+                type="text"
+                label="Selling Price"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.sellingPrice}
+                name="sellingPrice"
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
