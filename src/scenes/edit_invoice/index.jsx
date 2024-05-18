@@ -31,11 +31,9 @@ import dayjs from "dayjs";
 import PageNotFound from "../page_not_found";
 import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
-import SaveIcon from "@mui/icons-material/Save";
 import { Formik } from "formik";
 import * as yup from "yup";
 import SendIcon from "@mui/icons-material/Send";
-import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -44,7 +42,7 @@ import { BASE_URL, U_EMAIL } from "../../config";
 const customerInitialValues = {
   name: "",
   email: "",
-  contact: "",
+  mobile: "",
 };
 
 const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
@@ -87,17 +85,19 @@ const Edit_Invoice = () => {
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [printLoading, setPrintLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [productLoading, setProductLoading] = useState(false);
   const navigate = useNavigate();
   const [initialValuesSet, setInitialValuesSet] = useState(false);
-  const [resultFound, setResultFound] = useState(false);
+  const [productNameEmpty, setProductNameEmpty] = useState(true);
+  const [customerNameEmpty, setCustomerNameEmpty] = useState(true);
+  const [resultFound, setResultFound] = useState(true);
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
   const [toastDisplayed, setMsgDisplayed] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+  const [invoiceError, setInvoiceError] = useState(null);
   const [productData, setProductData] = useState({
     name: "",
     description: "",
@@ -212,7 +212,7 @@ const Edit_Invoice = () => {
   }, []);
 
   useEffect(() => {
-      fetchProduct();
+    fetchProduct();
   }, [initialValuesSet, fetchProduct]);
 
   const fetchCustomer = useCallback(() => {
@@ -322,54 +322,123 @@ const Edit_Invoice = () => {
     return collectedData;
   };
 
-  const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values };
-
-    setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
-
-      resetForm();
-
-      setIsLoading(false);
-      setOpenNProduct(false);
-    }, 1000); // Change the timeout value as needed
-  };
-
   const saveCustomer = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = {
+      ...values, // Include selected province in the saved object
+      user_email: U_EMAIL,
+    };
+    setCustomerLoading(true);
 
-    setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
+    // console.log(updatedValues);
 
-      resetForm();
+    axios
+      .post(`${BASE_URL}/system-api/customer`, updatedValues)
+      .then((response) => {
+        // console.log(response.data);
+        // Handle successful response, if needed
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-      setIsLoading(false);
-      setOpenNCustomer(false);
-    }, 1000); // Change the timeout value as needed
+          // After saving the customer, fetch the updated customer data
+          fetchCustomer();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setCustomerLoading(false);
+        setOpenNCustomer(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
-  const printInvoice = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
-      return;
+  const saveProduct = (values, { resetForm }) => {
+    const updatedValues = { ...values, user_email: U_EMAIL };
+
+    setProductLoading(true);
+
+    axios
+      .post(`${BASE_URL}/system-api/product`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+          // After saving the product, fetch the updated product data
+          fetchProduct();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setProductLoading(false);
+        setOpenNProduct(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
     }
-
-    setPrintLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-
-      console.log(id);
-      console.log(collectedData);
-
-      setPrintLoading(false);
-    }, 1000);
   };
 
   const sendInvoice = () => {
+    if (!invoiceNumber) {
+      setInvoiceError("Invoice number required");
+      return;
+    }
+
+    if (isNaN(invoiceNumber)) {
+      setInvoiceError("Please enter a number");
+      return;
+    }
+
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -378,33 +447,60 @@ const Edit_Invoice = () => {
     }
 
     setSendLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
 
-      console.log(id);
-      console.log(collectedData);
+    const collectedData = collectData();
 
-      setSendLoading(false);
-    }, 1000);
-  };
+    // console.log(collectedData);
 
-  const saveInvoice = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
-      return;
+    axios
+      .put(
+        `${BASE_URL}/system-api/invoice?id=${id}&email=${U_EMAIL}`,
+        collectedData
+      )
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+          setTimeout(() => {
+            const encodedData = btoa(`${id},${U_EMAIL}`);
+            window.open(
+              `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`,
+              "_blank"
+            );
+          }, 1000);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setSendLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
     }
-
-    setSaveLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-
-      console.log(id);
-      console.log(collectedData);
-
-      setSaveLoading(false);
-    }, 1000);
   };
 
   const [newRow, setNewRow] = useState({
@@ -462,7 +558,7 @@ const Edit_Invoice = () => {
     productTable.forEach((product) => {
       const amount = product.qty * product.price;
       const taxAmount = (amount * product.tax) / 100;
-      total += amount - taxAmount;
+      total += amount + taxAmount;
     });
     return total;
   };
@@ -470,7 +566,7 @@ const Edit_Invoice = () => {
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
     const taxAmount = (amount * tax) / 100;
-    const totalAmount = amount - taxAmount;
+    const totalAmount = amount + taxAmount;
     return totalAmount;
   };
 
@@ -503,7 +599,7 @@ const Edit_Invoice = () => {
     axios
       .get(`${BASE_URL}/system-api/invoice?id=${id}&email=${U_EMAIL}`)
       .then((response) => {
-        console.log(response.data);
+        // console.log(response.data);
         if (response.data.status === 1) {
           const userData = response.data.invoice;
           setGridRows(userData.productTable);
@@ -539,7 +635,6 @@ const Edit_Invoice = () => {
       .finally(function () {
         setInitialValuesSet(true);
       });
-    console.log(customerData);
   }, [id, customerData]);
 
   useEffect(() => {
@@ -699,8 +794,18 @@ const Edit_Invoice = () => {
               sx={{ alignSelf: "flex-end" }}
               value={invoiceNumber}
               onChange={(event) => {
-                setInvoiceNumber(event.target.value);
+                const value = event.target.value;
+                setInvoiceNumber(value);
+                if (!value) {
+                  setInvoiceError("Invoice number is required");
+                } else if (isNaN(value)) {
+                  setInvoiceError("Please enter a number");
+                } else {
+                  setInvoiceError(null);
+                }
               }}
+              error={!!invoiceError}
+              helperText={invoiceError}
             />
           </Box>
           <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
@@ -1014,66 +1119,24 @@ const Edit_Invoice = () => {
               setFooterNotes(event.target.value);
             }}
           />
-          <Box
+          <LoadingButton
+            loading={sendLoading}
+            loadingPosition="end"
+            endIcon={<SendIcon />}
+            variant="contained"
+            onClick={sendInvoice}
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "10px",
+              textTransform: "capitalize",
+              color: colors.grey[100],
+              minWidth: "150px",
+              backgroundColor: colors.blueAccent[700],
+              "&:hover": {
+                backgroundColor: colors.blueAccent[600],
+              },
             }}
           >
-            <LoadingButton
-              loading={printLoading}
-              loadingPosition="end"
-              endIcon={<FileCopyOutlinedIcon />}
-              variant="contained"
-              onClick={printInvoice}
-              sx={{
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Print
-            </LoadingButton>
-            <LoadingButton
-              loading={saveLoading}
-              loadingPosition="end"
-              endIcon={<SaveIcon />}
-              variant="contained"
-              onClick={saveInvoice}
-              sx={{
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Save
-            </LoadingButton>
-            <LoadingButton
-              loading={sendLoading}
-              loadingPosition="end"
-              endIcon={<SendIcon />}
-              variant="contained"
-              onClick={sendInvoice}
-              sx={{
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                minWidth: "150px",
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Send invoice
-            </LoadingButton>
-          </Box>
+            Send invoice
+          </LoadingButton>
         </Box>
       </Box>
 
@@ -1213,6 +1276,7 @@ const Edit_Invoice = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1230,7 +1294,10 @@ const Edit_Invoice = () => {
                         type="text"
                         label="Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setProductNameEmpty(event.target.value.trim() === ""); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1267,8 +1334,8 @@ const Edit_Invoice = () => {
                         label="Buying Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.buyingPrice}
-                        name="buyingPrice"
+                        value={values.buying_price}
+                        name="buying_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1304,8 +1371,9 @@ const Edit_Invoice = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={productLoading} // Pass loading state to LoadingButton
                       type="submit"
+                      disabled={!isValid || productNameEmpty}
                       sx={{
                         textTransform: "capitalize", // Remove text transformation
                         backgroundColor: "transparent", // Remove background color
@@ -1349,6 +1417,7 @@ const Edit_Invoice = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1366,7 +1435,12 @@ const Edit_Invoice = () => {
                         type="text"
                         label="Customer Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setCustomerNameEmpty(
+                            event.target.value.trim() === ""
+                          ); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1401,8 +1475,10 @@ const Edit_Invoice = () => {
                         label="Phone"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.contact}
-                        name="contact"
+                        value={values.mobile}
+                        name="mobile"
+                        error={!!touched.mobile && !!errors.mobile}
+                        helperText={touched.mobile && errors.mobile}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1422,7 +1498,8 @@ const Edit_Invoice = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={customerLoading} // Pass loading state to LoadingButton
+                      disabled={!isValid || customerNameEmpty}
                       type="submit"
                       sx={{
                         textTransform: "capitalize", // Remove text transformation

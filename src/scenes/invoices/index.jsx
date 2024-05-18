@@ -85,7 +85,7 @@ const Invoices = () => {
     axios
       .get(`${BASE_URL}/system-api/getInvoice?email=${U_EMAIL}`)
       .then(function (response) {
-        console.log(response.data.invoice);
+        // console.log(response.data.invoice);
         if (response.data.status === 1) {
           setProductData(response.data.invoice);
           setMsgDisplayed(true);

@@ -35,6 +35,8 @@ const initialFormValues = {
   telephone: "",
   website: "",
   notes: "",
+  balance: 0,
+  payment: 0,
 };
 
 const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
@@ -59,6 +61,7 @@ const Edit_Customer = () => {
   const { id } = useParams(); // Get the id from the URL params
   const [initialValuesSet, setInitialValuesSet] = useState(false);
   const [resultFound, setResultFound] = useState(false);
+  const [payment, setPayment] = useState(0);
 
   const setInitialFormValues = (customer) => {
     // Set initial form values with customer data
@@ -76,6 +79,7 @@ const Edit_Customer = () => {
     initialFormValues.telephone = customer.telephone;
     initialFormValues.website = customer.website;
     initialFormValues.notes = customer.notes;
+    initialFormValues.balance = customer.balance;
   };
 
   const fetchProvince = useCallback(() => {
@@ -102,6 +106,7 @@ const Edit_Customer = () => {
     axios
       .get(`${BASE_URL}/system-api/customer?id=${id}&email=${U_EMAIL}`)
       .then((response) => {
+        console.log(response.data);
         if (response.data.status === 1) {
           const userData = response.data.customer;
           setInitialFormValues(userData);
@@ -154,6 +159,8 @@ const Edit_Customer = () => {
 
     setIsLoading(true);
 
+    console.log(updatedValues);
+
     axios
       .put(`${BASE_URL}/system-api/customer?id=${id}&email=${U_EMAIL}`, updatedValues)
       .then((response) => {
@@ -193,6 +200,18 @@ const Edit_Customer = () => {
       });
     }
   };
+
+  const paidAmountChange = (event) => {
+    const payment = parseFloat(event.target.value);
+    if (!isNaN(payment)) {
+      setPayment(payment);
+    } else {
+      setPayment(0);
+    }
+    console.log(event.target.value);
+  };
+
+  const payableAmount = initialFormValues.balance - payment;
 
   if (!initialValuesSet) {
     return <Loader />;
@@ -242,6 +261,63 @@ const Edit_Customer = () => {
                 marginX: isNonMobile ? "20vw" : undefined,
               }}
             >
+              <TextField
+                fullWidth
+                variant="filled"
+                type="text"
+                label="Balance"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                name="balance"
+                value={payableAmount}
+                sx={{
+                  gridColumn: "span 2",
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: colors.primary[100],
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="filled"
+                type="text"
+                label="Payment"
+                onBlur={handleBlur}
+                value={values.payment}
+                onChange={(e) => {
+                  paidAmountChange(e);
+                  handleChange(e); // Call your additional function here
+                }}
+                name="payment"
+                sx={{
+                  gridColumn: "span 2",
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: colors.primary[100],
+                  },
+                }}
+              />
+              <LoadingButton
+                loading={isLoading}
+                loadingPosition="end"
+                endIcon={<SaveIcon />}
+                variant="contained"
+                disabled={!isValid || (!values.name && touched.name)}
+                type="submit"
+                sx={{
+                  gridColumn: "span 4",
+                  textTransform: "capitalize",
+                  color: colors.grey[100],
+                  fontSize: "17px",
+                  fontWeight: "500",
+                  paddingY: "10px",
+                  backgroundColor: colors.blueAccent[700],
+                  "&:hover": {
+                    backgroundColor: colors.blueAccent[600],
+                  },
+                }}
+              >
+                Save
+              </LoadingButton>
               <Typography variant="h5" sx={{ fontWeight: "bold" }}>
                 Contact
               </Typography>

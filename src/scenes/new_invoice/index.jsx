@@ -84,7 +84,8 @@ const New_Invoice = () => {
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
   const [sendLoading, setSendLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [productLoading, setProductLoading] = useState(false);
   const navigate = useNavigate();
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
@@ -296,7 +297,7 @@ const New_Invoice = () => {
   const saveProduct = (values, { resetForm }) => {
     const updatedValues = { ...values, user_email: U_EMAIL };
 
-    setIsLoading(true);
+    setProductLoading(true);
 
     axios
       .post(`${BASE_URL}/system-api/product`, updatedValues)
@@ -326,7 +327,7 @@ const New_Invoice = () => {
       })
       .finally(function () {
         resetForm();
-        setIsLoading(false);
+        setProductLoading(false);
         setOpenNProduct(false);
       });
 
@@ -375,7 +376,7 @@ const New_Invoice = () => {
       ...values, // Include selected province in the saved object
       user_email: U_EMAIL,
     };
-    setIsLoading(true);
+    setCustomerLoading(true);
 
     axios
       .post(`${BASE_URL}/system-api/customer`, updatedValues)
@@ -404,7 +405,7 @@ const New_Invoice = () => {
       })
       .finally(function () {
         resetForm();
-        setIsLoading(false);
+        setCustomerLoading(false);
         setOpenNCustomer(false);
       });
 
@@ -462,7 +463,7 @@ const New_Invoice = () => {
     setSendLoading(true);
 
     const collectedData = collectData();
-    console.log(collectedData);
+    // console.log(collectedData);
 
     axios
       .post(`${BASE_URL}/system-api/invoice?email=${U_EMAIL}`, collectedData)
@@ -480,9 +481,6 @@ const New_Invoice = () => {
             progress: undefined,
             theme: theme.palette.mode === "dark" ? "dark" : "light",
           });
-
-          // After saving the product, fetch the updated product data
-          fetchProduct();
 
           setTimeout(() => {
             const invoiceId = response.data.invoice_id;
@@ -1327,7 +1325,7 @@ const New_Invoice = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={productLoading} // Pass loading state to LoadingButton
                       type="submit"
                       disabled={!isValid || productNameEmpty}
                       sx={{
@@ -1454,7 +1452,7 @@ const New_Invoice = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={customerLoading} // Pass loading state to LoadingButton
                       disabled={!isValid || customerNameEmpty}
                       type="submit"
                       sx={{
