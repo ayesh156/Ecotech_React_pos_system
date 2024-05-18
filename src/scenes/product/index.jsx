@@ -1,17 +1,27 @@
 import { Box, Button, useTheme } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataProduct } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import Loader from "../../components/Loader";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const Product = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [productData, setProductData] = useState({
+    id: "",
+    name: "",
+    selling_price: "",
+  },);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const columns = [
     {
@@ -21,7 +31,7 @@ const Product = () => {
       cellClassName: "name-column--cell",
     },
     {
-      field: "sellingPrice",
+      field: "selling_price",
       headerName: "Price (Rs.)",
       type: "number",
       flex: 1,
@@ -40,11 +50,49 @@ const Product = () => {
     },
   ];
 
-  useEffect(() => {
-    setTimeout(() => {
-      setInitialValuesSet(true);
-    }, 500);
+  const fetchProduct = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getProducts?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setProductData(response.data.product);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
   }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+  }, [initialValuesSet, fetchProduct]);
+
+  useEffect(() => {
+    if (initialValuesSet && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [initialValuesSet, toastDisplayed, toastMsg, theme.palette.mode]);
 
   if (!initialValuesSet) {
     return <Loader />;
@@ -52,11 +100,15 @@ const Product = () => {
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Box
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
-      <Header title="Product & Services" subtitle="Empowering your needs, delivering exceptional solutions" />
-      <Link to={"/product-services/create-product-service"}>
+        <Header
+          title="Product & Services"
+          subtitle="Empowering your needs, delivering exceptional solutions"
+        />
+        <Link to={"/product-services/create-product-service"}>
           <Button
             sx={{
               textTransform: "none",
@@ -98,10 +150,10 @@ const Product = () => {
           "& .MuiDataGrid-footerContainer": {
             borderTop: "none",
             backgroundColor: colors.blueAccent[700],
-          }
+          },
         }}
       >
-        <DataGrid rows={mockDataProduct} columns={columns} />
+        <DataGrid rows={productData} columns={columns} />
       </Box>
     </Box>
   );

@@ -6,13 +6,22 @@ import { useNavigate } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import { tokens } from "../../theme";
 import LoadingButton from "@mui/lab/LoadingButton";
+import * as yup from "yup";
 import SaveIcon from "@mui/icons-material/Save";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
+
+const productSchema = yup.object().shape({
+  name: yup.string().required("required"),
+});
 
 const initialValues = {
   name: "",
   description: "",
-  buyingPrice: "",
-  sellingPrice: "",
+  buying_price: "",
+  selling_price: "",
 };
 
 const New_Product = () => {
@@ -21,22 +30,59 @@ const New_Product = () => {
   const isNonMobile = useMediaQuery("(min-width:800px)");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [toastMsg, setToastMsg] = useState("");
+  const [isNameFieldEmpty, setNameFieldEmpty] = useState(true);
 
   const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = { ...values, user_email : U_EMAIL };
 
+    console.log(updatedValues);
     setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
 
-      resetForm();
+    axios
+      .post(`${BASE_URL}/system-api/product`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setIsLoading(false);
+      });
 
-      setIsLoading(false);
-    }, 1000); // Change the timeout value as needed
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -57,6 +103,7 @@ const New_Product = () => {
       <Formik
         onSubmit={saveProduct}
         initialValues={initialValues}
+        validationSchema={productSchema}
       >
         {({
           values,
@@ -66,6 +113,7 @@ const New_Product = () => {
           handleChange,
           handleSubmit,
           resetForm,
+          isValid,
         }) => (
           <form onSubmit={handleSubmit}>
             <Box
@@ -83,7 +131,10 @@ const New_Product = () => {
                 type="text"
                 label="Name"
                 onBlur={handleBlur}
-                onChange={handleChange}
+                onChange={(event) => {
+                  handleChange(event);
+                  setNameFieldEmpty(event.target.value.trim() === ""); // Access value property before calling trim
+                }}
                 value={values.name}
                 name="name"
                 error={!!touched.name && !!errors.name}
@@ -121,8 +172,8 @@ const New_Product = () => {
                 label="Buying Price"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.buyingPrice}
-                name="buyingPrice"
+                value={values.buying_price}
+                name="buying_price"
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -137,8 +188,8 @@ const New_Product = () => {
                 label="Selling Price"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.sellingPrice}
-                name="sellingPrice"
+                value={values.selling_price}
+                name="selling_price"
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -151,6 +202,7 @@ const New_Product = () => {
                 loadingPosition="end"
                 endIcon={<SaveIcon />}
                 variant="contained"
+                disabled={!isValid || isNameFieldEmpty}
                 type="submit"
                 sx={{
                   gridColumn: "span 4",

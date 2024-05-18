@@ -25,47 +25,46 @@ import "react-toastify/dist/ReactToastify.css";
 const phoneRegExp = /^[0]{1}[147]{1}[01245678]{1}[0-9]{7}$/;
 
 const userSchema = yup.object().shape({
-  name: yup.string().required("required"),
-  email: yup.string().email("invalid email").required("required"),
+  first_name: yup.string().required("required"),
+  last_name: yup.string().required("required"),
   contact: yup
     .string()
     .matches(phoneRegExp, "Phone number is not valid")
     .required("required"),
-  address: yup.string().required("required"),
   image: yup.mixed().required("Please upload the company logo"),
 });
 
-const Settings = () => {
+const Profile = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const isNonMobile = useMediaQuery("(min-width:800px)");
   const [selectedImage, setSelectedImage] = useState(null);
   const [fileName, setFileName] = useState("No selected file");
   const [isLoading, setIsLoading] = useState(false);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
   const [resultFound, setResultFound] = useState(false);
   const [toastDisplayed, setMsgDisplayed] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const [toastMsg2, setToastMsg2] = useState("");
-  const [initialValuesSet, setInitialValuesSet] = useState(false);
   const [initialValues, setInitialValues] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     contact: "",
-    address: "",
     image: null,
   });
 
   const getFileNameFromPath = (path) => {
-    const pathSegments = path.split('/');
+    const pathSegments = path.split("/");
     return pathSegments[pathSegments.length - 1];
   };
 
-  const fetchSettings = useCallback(() => {
+  const fetchProfile = useCallback(() => {
     axios
-      .get(`${BASE_URL}/system-api/settings?email=${U_EMAIL}`)
+      .get(`${BASE_URL}/system-api/profile?email=${U_EMAIL}`)
       .then((response) => {
         if (response.data.status === 1) {
-          const userData = response.data.settings;
+          const userData = response.data.profile;
           setInitialValues(userData);
           setSelectedImage(userData.image === "" ? userData.image : "../../" + userData.image);
           setFileName(userData.image === "" ? "No selected file" : getFileNameFromPath("../../" + userData.image));
@@ -87,9 +86,9 @@ const Settings = () => {
 
   useEffect(() => {
     if (!initialValuesSet) {
-      fetchSettings();
+      fetchProfile();
     }
-  }, [initialValuesSet, fetchSettings]);
+  }, [initialValuesSet, fetchProfile]);
 
   useEffect(() => {
     if (setResultFound && !toastDisplayed && toastMsg) {
@@ -110,10 +109,11 @@ const Settings = () => {
   }, [setResultFound, toastDisplayed, toastMsg, theme.palette.mode]);
 
   const saveSettings = (values, { resetForm }) => {
-    const updatedValues = { ...values, image: selectedImage };
+    const updatedValues = { ...values, email: U_EMAIL, image: selectedImage };
     setIsLoading(true);
+
     axios
-      .put(`${BASE_URL}/system-api/settings?email=${U_EMAIL}`, updatedValues)
+      .put(`${BASE_URL}/system-api/profile?email=${U_EMAIL}`, updatedValues)
       .then((response) => {
         if ((response.data.status === 1)) {
           toast.success(response.data.message, {
@@ -128,6 +128,7 @@ const Settings = () => {
           });
         }else {
           setToastMsg2(response.data.message);
+
         }
       })
       .catch((error) => {
@@ -179,8 +180,8 @@ const Settings = () => {
     <Box m="20px">
       <ToastContainer />
       <Header
-        title="Company Settings"
-        subtitle="Select your company default logo (225 x 225 pixels)"
+        title="Profile Settings"
+        subtitle="Select your profile default logo (225 x 225 pixels)"
       />
 
       <Formik
@@ -247,9 +248,7 @@ const Settings = () => {
                     accept="image/*"
                     className="input-field"
                     hidden
-                    onChange={(event) =>
-                      selectImage(event, setFieldValue)
-                    }
+                    onChange={(event) => selectImage(event, setFieldValue)}
                   />
                   {selectedImage ? (
                     <img src={selectedImage} height={230} alt={fileName} />
@@ -287,40 +286,22 @@ const Settings = () => {
                   )}
                 </Box>
               </Box>
+
               <TextField
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Company Name"
+                label="First Name"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.name}
-                name="name"
-                error={!!touched.name && !!errors.name}
-                helperText={touched.name && errors.name}
+                value={values.first_name}
+                name="first_name"
+                error={!!touched.first_name && !!errors.first_name}
+                helperText={touched.first_name && errors.first_name}
                 sx={{
-                  gridColumn: "span 4",
+                  gridColumn: "span 2",
                   "& .MuiInputLabel-root.Mui-focused": {
-                    color: colors.primary[100],
-                  },
-                  marginTop: "20px",
-                }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Company Address"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.address}
-                name="address"
-                error={!!touched.address && !!errors.address}
-                helperText={touched.address && errors.address}
-                sx={{
-                  gridColumn: "span 4",
-                  "& .MuiInputLabel-root.Mui-focused": {
-                    color: colors.primary[100],
+                    color: colors.primary[100], // Change focus color here
                   },
                 }}
               />
@@ -328,13 +309,28 @@ const Settings = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Company Email"
+                label="Last Name"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.email}
-                name="email"
-                error={!!touched.email && !!errors.email}
-                helperText={touched.email && errors.email}
+                value={values.last_name}
+                name="last_name"
+                error={!!touched.last_name && !!errors.last_name}
+                helperText={touched.last_name && errors.last_name}
+                sx={{
+                  gridColumn: "span 2",
+                  marginTop: isNonMobile ? undefined : "20px",
+                  "& .MuiInputLabel-root.Mui-focused": {
+                    color: colors.primary[100], // Change focus color here
+                  },
+                }}
+              />
+              <TextField
+                fullWidth
+                variant="filled"
+                type="text"
+                label="Email"
+                disabled
+                value={U_EMAIL}
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -346,7 +342,7 @@ const Settings = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Company Contact Number"
+                label="Mobile"
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.contact}
@@ -365,7 +361,7 @@ const Settings = () => {
                 loadingPosition="end"
                 endIcon={<SaveIcon />}
                 variant="contained"
-                disabled={!isValid || (!values.email && touched.email) || (!values.contact && touched.contact)}
+                disabled={!isValid || (!values.first_name && touched.first_name) || (!values.last_name && touched.last_name) || (!values.contact && touched.contact)}
                 type="submit"
                 sx={{
                   gridColumn: "span 4",
@@ -391,4 +387,4 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+export default Profile;

@@ -26,11 +26,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { useNavigate, useParams } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
-import {
-  mockInvoices,
-  sampleCustomerData,
-  mockDataProduct,
-} from "../../data/mockData";
 import Loader from "../../components/Loader";
 import dayjs from "dayjs";
 import PageNotFound from "../page_not_found";
@@ -41,6 +36,10 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import SendIcon from "@mui/icons-material/Send";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const customerInitialValues = {
   name: "",
@@ -48,15 +47,18 @@ const customerInitialValues = {
   contact: "",
 };
 
+const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
+
 const customerSchema = yup.object().shape({
   name: yup.string().required("required"),
+  mobile: yup.string().matches(phoneRegExp, "Phone number is not valid"),
 });
 
 const productInitialValues = {
   name: "",
   description: "",
-  buyingPrice: "",
-  sellingPrice: "",
+  buying_price: "",
+  selling_price: "",
 };
 
 const productSchema = yup.object().shape({
@@ -94,6 +96,15 @@ const Edit_Invoice = () => {
   const [resultFound, setResultFound] = useState(false);
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [productData, setProductData] = useState({
+    name: "",
+    description: "",
+    buying_price: "",
+    selling_price: "",
+  });
+  const [customerData, setCustomerData] = useState([]);
 
   const { id } = useParams();
 
@@ -182,46 +193,51 @@ const Edit_Invoice = () => {
   ];
 
   const fetchProduct = useCallback(() => {
-    const product = mockInvoices.find(
-      (item) => item.invoiceNumber === parseInt(id)
-    );
-
-    if (product) {
-      setResultFound(true);
-      setGridRows(product.productTable);
-      setTotalAmount(calculateTotalAmount(product.productTable));
-      setSelectedDate(product.selectedDate);
-      setSelectedDueDate(product.selectedDueDate);
-      setSummary(product.summary);
-      setInvoiceNumber(product.invoiceNumber);
-      setNotes(product.notes);
-      setPaymentInstructions(product.paymentInstructions);
-      setFooterNotes(product.footerNotes);
-      setPaidAmount(product.paidAmount);
-
-      const customerData = sampleCustomerData.find(
-        (customer) => customer.id === product.customerId
-      );
-
-      // Set the customer name if customerData is found
-      if (customerData) {
-        setCustomer(customerData.name);
-        setCustomerId(customerData.id);
-      }
-
-      setTimeout(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getProducts?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setProductData(response.data.product);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
         setInitialValuesSet(true);
-      }, 1000);
-    } else {
-      console.log("Not Found");
-    }
-  }, [id]);
+      });
+  }, []);
 
   useEffect(() => {
-    if (!initialValuesSet) {
       fetchProduct();
-    }
   }, [initialValuesSet, fetchProduct]);
+
+  const fetchCustomer = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getCustomers?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setCustomerData(response.data.customer);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching customer data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [fetchCustomer]);
 
   useEffect(() => {
     if (initialValuesSet) {
@@ -246,23 +262,48 @@ const Edit_Invoice = () => {
   }, [gridRows]);
 
   const collectData = () => {
-    //     // Collect values from Datepickers
-    const selectedDateValue = selectedDate
-      ? dayjs(selectedDate).format("YYYY-MM-DD")
-      : null;
-    const selectedDueDateValue = selectedDueDate
-      ? dayjs(selectedDueDate).format("YYYY-MM-DD")
-      : null;
+    // Collect values from Datepickers
+    const isString = (value) => typeof value === "string";
+
+    let selectedDateValue = null;
+
+    if (isString(selectedDate)) {
+      selectedDateValue = selectedDate;
+    } else {
+      selectedDateValue = selectedDate
+        ? selectedDate.format("YYYY-MM-DD")
+        : null;
+    }
+
+    let selectedDueDateValue = null;
+
+    if (isString(selectedDate)) {
+      selectedDueDateValue = selectedDueDate;
+    } else {
+      selectedDueDateValue = selectedDueDate
+        ? selectedDueDate.format("YYYY-MM-DD")
+        : null;
+    }
 
     // Collect values from DataGrid rows
-    const productTable = gridRows.map((row) => ({
-      name: row.name,
-      description: row.description,
-      qty: row.qty,
-      price: row.price,
-      tax: row.tax,
-      amount: row.amount,
-    }));
+    const productTable = gridRows.map((row) => {
+      // Find the corresponding product data by name (or ID if available)
+      const productInfo = productData.find(
+        (product) => product.name === row.name
+      );
+
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        qty: row.qty,
+        price: row.price,
+        tax: row.tax,
+        buying_price: productInfo
+          ? parseInt(productInfo.buying_price, 10) || 0
+          : 0,
+      };
+    });
 
     // Combine all collected values into one object
     const collectedData = {
@@ -458,14 +499,85 @@ const Edit_Invoice = () => {
     setOpen(false);
   };
 
-  if (!resultFound) {
-    return <PageNotFound />;
-  } else if (!initialValuesSet) {
+  const fetchInvoice = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/invoice?id=${id}&email=${U_EMAIL}`)
+      .then((response) => {
+        console.log(response.data);
+        if (response.data.status === 1) {
+          const userData = response.data.invoice;
+          setGridRows(userData.productTable);
+          setTotalAmount(calculateTotalAmount(userData.productTable));
+          setSelectedDate(userData.selectedDate);
+          setSelectedDueDate(userData.selectedDueDate);
+          setSummary(userData.summary);
+          setInvoiceNumber(userData.invoiceNumber);
+          setNotes(userData.notes);
+          setPaymentInstructions(userData.paymentInstructions);
+          setFooterNotes(userData.footerNotes);
+          setPaidAmount(userData.paidAmount);
+          // Find and set the selected customer
+
+          const selectedCustomer = customerData.find(
+            (customer) => customer.id === userData.customerId
+          );
+          if (selectedCustomer) {
+            setCustomer(selectedCustomer);
+            setCustomerId(selectedCustomer.id);
+          }
+          setResultFound(true);
+          setMsgDisplayed(true);
+        } else {
+          setResultFound(false);
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+    console.log(customerData);
+  }, [id, customerData]);
+
+  useEffect(() => {
+    fetchInvoice();
+  }, [fetchInvoice, customerData, fetchProduct]);
+
+  useEffect(() => {
+    if (initialValuesSet && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [initialValuesSet, toastDisplayed, toastMsg, theme.palette.mode]);
+
+  if (!initialValuesSet) {
     return <Loader />;
+  } else if (!resultFound) {
+    return (
+      <>
+        <ToastContainer />
+        <PageNotFound />
+      </>
+    );
   }
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -544,22 +656,17 @@ const Edit_Invoice = () => {
               <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={sampleCustomerData}
-                value={
-                  customer
-                    ? sampleCustomerData.find(
-                        (option) => option.name === customer
-                      )
-                    : null
-                }
+                options={customerData}
+                value={customer}
                 getOptionLabel={(option) => option.name}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
                 onChange={(event, newValue) => {
                   if (newValue) {
-                    setCustomer(newValue.name);
+                    setCustomer(newValue);
                     setCustomerId(newValue.id);
                     setIsCustomerError(false);
                   } else {
-                    setCustomer("");
+                    setCustomer(null);
                     setCustomerId("");
                     setIsCustomerError(true);
                   }
@@ -571,7 +678,7 @@ const Edit_Invoice = () => {
                     {isCustomerError && (
                       <FormHelperText
                         sx={{
-                          color: colors.redAccent[500],
+                          color: "red",
                           marginLeft: "10px",
                           position: "absolute",
                           bottom: -20,
@@ -688,10 +795,10 @@ const Edit_Invoice = () => {
                     </Button>
                     <Autocomplete
                       key={fieldName}
-                      options={mockDataProduct}
+                      options={productData}
                       value={
                         newRow.name
-                          ? mockDataProduct.find(
+                          ? productData.find(
                               (option) => option.name === newRow.name
                             )
                           : null
@@ -703,7 +810,7 @@ const Edit_Invoice = () => {
                             ...prevRow,
                             name: newValue.name,
                             description: newValue.description,
-                            price: newValue.sellingPrice.toString(),
+                            price: newValue.selling_price.toString(),
                             qty: "1",
                           }));
                         } else {
@@ -1070,9 +1177,12 @@ const Edit_Invoice = () => {
             </DialogContent>
           )}
           <DialogActions>
-            <Button onClick={() => {
-              setOpen(false);
-            }} sx={{ color: colors.primary[100] }}>
+            <Button
+              onClick={() => {
+                setOpen(false);
+              }}
+              sx={{ color: colors.primary[100] }}
+            >
               Close
             </Button>
             <Button onClick={saveEditedRow} sx={{ color: colors.primary[100] }}>
@@ -1173,8 +1283,8 @@ const Edit_Invoice = () => {
                         label="Selling Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.sellingPrice}
-                        name="sellingPrice"
+                        value={values.selling_price}
+                        name="selling_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -10,7 +10,6 @@ import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
@@ -21,6 +20,11 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import RoomPreferencesOutlinedIcon from '@mui/icons-material/RoomPreferencesOutlined';
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { U_EMAIL, BASE_URL } from "../../config";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -55,6 +59,70 @@ const Sidebar = ({ onLogin }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
   const isDesktop = useMediaQuery("(min-width:600px)");
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [fileName, setFileName] = useState("No selected file");
+  const [initialValues, setInitialValues] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    contact: "",
+    image: null,
+  });
+
+  const getFileNameFromPath = (path) => {
+    const pathSegments = path.split("/");
+    return pathSegments[pathSegments.length - 1];
+  };
+
+  const fetchProfile = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/profile?email=${U_EMAIL}`)
+      .then((response) => {
+        if (response.data.status === 1) {
+          const userData = response.data.profile;
+          setInitialValues(userData);
+          setSelectedImage(userData.image === "" ? userData.image : "../../" + userData.image);
+          setFileName(userData.image === "" ? "No selected file" : getFileNameFromPath("../../" + userData.image));
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProfile();
+    }
+  }, [initialValuesSet, fetchProfile]);
+
+  useEffect(() => {
+    if (!toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [toastDisplayed, toastMsg, theme.palette.mode]);
 
   const handleSignIn = () => {
     // Perform sign-in logic
@@ -90,6 +158,7 @@ const Sidebar = ({ onLogin }) => {
         },
       }}
     >
+      <ToastContainer />
       <ProSidebar image="../../assets/bg.jpg" collapsed={isCollapsed}>
         <Menu iconShape="square">
           {/* LOGO AND MENU ICON */}
@@ -121,10 +190,10 @@ const Sidebar = ({ onLogin }) => {
             <Box mb="5px">
               <Box display="flex" justifyContent="center" alignItems="center">
                 <img
-                  alt="profile-user"
+                  alt={fileName}
                   width="100px"
                   height="100px"
-                  src={`../../assets/user.png`}
+                  src={selectedImage === "" ? "../../assets/user-avatar.jpg" : selectedImage}
                   style={{ cursor: "pointer", borderRadius: "50%" }}
                 />
               </Box>
@@ -135,10 +204,10 @@ const Sidebar = ({ onLogin }) => {
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0" }}
                 >
-                  Sujith
+                  {initialValues.first_name === "" ? "Name" : initialValues.first_name}
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
-                  Admin
+                {U_EMAIL}
                 </Typography>
               </Box>
               <Box
@@ -243,9 +312,16 @@ const Sidebar = ({ onLogin }) => {
               setSelected={setSelected}
             />
             <Item
+              title="Profile"
+              to="/profile"
+              icon={<ManageAccountsOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
               title="Settings"
               to="/settings"
-              icon={<ManageAccountsOutlinedIcon />}
+              icon={<RoomPreferencesOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />

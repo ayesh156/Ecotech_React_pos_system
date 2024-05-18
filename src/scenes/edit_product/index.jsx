@@ -7,19 +7,16 @@ import { useNavigate, useParams } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import { tokens } from "../../theme";
 import LoadingButton from "@mui/lab/LoadingButton";
-// import axios from "axios";
-import { mockDataProduct } from "../../data/mockData";
 import SaveIcon from "@mui/icons-material/Save";
 import Loader from "../../components/Loader";
 import PageNotFound from "../page_not_found";
+import axios from "axios";
+import { BASE_URL, U_EMAIL } from "../../config";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const userSchema = yup.object().shape({
+const productSchema = yup.object().shape({
   name: yup.string().required("required"),
-  description: yup.string().required("required"),
-  price: yup
-    .number()
-    .required("Price is required")
-    .typeError("Price  is not valid"),
 });
 
 const Edit_Product = () => {
@@ -30,6 +27,8 @@ const Edit_Product = () => {
   const navigate = useNavigate();
   const [initialValuesSet, setInitialValuesSet] = useState(false);
   const [resultFound, setResultFound] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const { id } = useParams();
 
@@ -37,41 +36,36 @@ const Edit_Product = () => {
   const [initialValues, setInitialValues] = useState({
     name: "",
     description: "",
-    buyingPrice: "",
-    sellingPrice: "",
+    buying_price: "",
+    selling_price: "",
   });
 
   const fetchProduct = useCallback(() => {
-    // axios.get(`http://localhost/../api/user/${id}/`)
-    //   .then(response => {
-    //     const userData = response.data;
-    //     setInitialValues({
-    //       name: userData.name,
-    //       description: userData.description,
-    //       price: userData.price.toString(),
-    //     });
-    //     setInitialValuesSet(true); // Set initialValuesSet to true after setting initialValues
-    //   })
-    //   .catch(error => {
-    //     console.error("Error fetching user:", error);
-    //   });
-
-    // Find the product in the mock data array based on the provided ID
-    const product = mockDataProduct.find((item) => item.id === parseInt(id));
-
-    // If product is found, set the initial values state
-    if (product) {
-      setResultFound(true);
-      setInitialValues({
-        name: product.name,
-        description: product.description,
-        sellingPrice: product.sellingPrice.toString(), 
-        buyingPrice: product.buyingPrice.toString(), 
-      });
-      setTimeout(() => {
+    axios
+      .get(`${BASE_URL}/system-api/product?id=${id}&email=${U_EMAIL}`)
+      .then((response) => {
+        if (response.data.status === 1) {
+          const userData = response.data.product;
+          setInitialValues({
+            name: userData.name,
+            description: userData.description,
+            buying_price: userData.buying_price,
+            selling_price: userData.selling_price,
+          });
+          setResultFound(true);
+          setMsgDisplayed(true);
+        } else {
+          setResultFound(false);
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
         setInitialValuesSet(true);
-      }, 1000);
-    }
+      });
   }, [id]);
 
   useEffect(() => {
@@ -80,26 +74,78 @@ const Edit_Product = () => {
     }
   }, [initialValuesSet, fetchProduct]); // useEffect will run whenever initialValuesSet changes
 
-  const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+  useEffect(() => {
+    if (setResultFound && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [setResultFound, toastDisplayed, toastMsg, theme.palette.mode]);
+
+  const updateProduct = (values) => {
+    const updatedValues = { ...values};
 
     setIsLoading(true);
-    setTimeout(() => {
-      console.log(id);
-      console.log(updatedValues);
 
-      setIsLoading(false);
-    }, 1000); // Change the timeout value as needed
+    axios
+      .put(`${BASE_URL}/system-api/product?id=${id}&email=${U_EMAIL}`, updatedValues)
+      .then((response) => {
+        if ((response.data.status === 1)) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+        }else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setIsLoading(false);
+      });
+
+      if(toastMsg){
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+
   };
 
-  if (!resultFound) {
-    return <PageNotFound />;
-  } else if (!initialValuesSet) {
+  if (!initialValuesSet) {
     return <Loader />;
+  } else if (!resultFound) {
+    return <PageNotFound />;
   }
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -118,9 +164,9 @@ const Edit_Product = () => {
         </Typography>
       </Button>
       <Formik
-        onSubmit={saveProduct}
+        onSubmit={updateProduct}
         initialValues={initialValues}
-        validationSchema={userSchema}
+        validationSchema={productSchema}
       >
         {({
           values,
@@ -129,6 +175,7 @@ const Edit_Product = () => {
           handleBlur,
           handleChange,
           handleSubmit,
+          isValid
         }) => (
           <form onSubmit={handleSubmit}>
             <Box
@@ -184,8 +231,8 @@ const Edit_Product = () => {
                 label="Buying Price"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.buyingPrice}
-                name="buyingPrice"
+                value={values.buying_price}
+                name="buying_price"
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -200,8 +247,8 @@ const Edit_Product = () => {
                 label="Selling Price"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.sellingPrice}
-                name="sellingPrice"
+                value={values.selling_price}
+                name="selling_price"
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -214,6 +261,7 @@ const Edit_Product = () => {
                 loadingPosition="end"
                 endIcon={<SaveIcon />}
                 variant="contained"
+                disabled={!isValid || (!values.name && touched.name)}
                 type="submit"
                 sx={{
                   gridColumn: "span 4",

@@ -1,4 +1,4 @@
-import { useState } from "react"; // Make sure you import useState from react
+import { useState, useEffect, useCallback } from "react";
 import { Box, TextField, useTheme, Typography, Button } from "@mui/material";
 import { Formik } from "formik";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -9,15 +9,20 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import SaveIcon from "@mui/icons-material/Save";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
+import * as yup from "yup";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
-import { sriLankaProvinces } from "../../data/mockData";
+import Loader from "../../components/Loader";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const initialFormValues = {
   name: "",
   email: "",
-  contact: "",
+  mobile: "",
   address1: "",
   address2: "",
   city: "",
@@ -26,10 +31,18 @@ const initialFormValues = {
   instructions: "",
   account: "",
   fax: "",
-  mobile: "",
+  telephone: "",
   website: "",
   notes: "",
 };
+
+const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
+
+const customerSchema = yup.object().shape({
+  name: yup.string().required("required"),
+  mobile: yup.string().matches(phoneRegExp, 'Phone number is not valid'),
+  telephone: yup.string().matches(phoneRegExp, 'Phone number is not valid')
+});
 
 const New_Customer = () => {
   const theme = useTheme();
@@ -37,25 +50,115 @@ const New_Customer = () => {
   const isNonMobile = useMediaQuery("(min-width:800px)");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState(1);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [provinces, setProvinces] = useState([]);
+  const [isNameFieldEmpty, setNameFieldEmpty] = useState(true);
+
+  const fetchProvince = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getProvinces`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setProvinces(response.data.province);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching customer data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProvince();
+    }
+  }, [initialValuesSet, fetchProvince]);
+
+  useEffect(() => {
+    if (initialValuesSet && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [initialValuesSet, toastDisplayed, toastMsg, theme.palette.mode]);
 
   const saveCustomer = (values, { resetForm }) => {
     const updatedValues = {
       ...values,
-      province: selectedProvince, // Include selected province in the saved object
+      province: parseInt(selectedProvince), // Include selected province in the saved object
+      user_email: U_EMAIL,
     };
-   
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log(updatedValues); // Log all form values
-      resetForm();
-      setSelectedProvince("");
-    }, 1000);
+
+    axios
+      .post(`${BASE_URL}/system-api/customer`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setSelectedProvince(1);
+        setIsLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
+
+  if (!initialValuesSet) {
+    return <Loader />;
+  }
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -76,8 +179,9 @@ const New_Customer = () => {
       <Formik
         onSubmit={saveCustomer} // Pass values to saveCustomer function
         initialValues={initialFormValues}
+        validationSchema={customerSchema}
       >
-        {({ values,handleBlur, handleChange, handleSubmit, resetForm }) => (
+        {({ values,errors, touched, handleBlur, handleChange, handleSubmit, resetForm, isValid }) => (
           <form onSubmit={handleSubmit}>
             <Box
               display="grid"
@@ -97,9 +201,14 @@ const New_Customer = () => {
                 type="text"
                 label="Name"
                 onBlur={handleBlur}
-                onChange={handleChange}
+                onChange={(event) => {
+                  handleChange(event);
+                  setNameFieldEmpty(event.target.value.trim() === ""); // Access value property before calling trim
+                }}
                 name="name"
                 value={values.name}
+                error={!!touched.name && !!errors.name}
+                helperText={touched.name && errors.name}
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -127,11 +236,13 @@ const New_Customer = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Phone"
+                label="Mobile"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                name="contact"
-                value={values.contact}
+                name="mobile"
+                value={values.mobile}
+                error={!!touched.mobile && !!errors.mobile}
+                helperText={touched.mobile && errors.mobile}
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -230,9 +341,9 @@ const New_Customer = () => {
                   label="Province"
                   onChange={(e) => setSelectedProvince(e.target.value)}
                 >
-                  {sriLankaProvinces.map((province) => (
-                    <MenuItem key={province} value={province}>
-                      {province} Province
+                  {provinces.map((province) => (
+                    <MenuItem key={province.id} value={province.id}>
+                      {province.name} Province
                     </MenuItem>
                   ))}
                 </Select>
@@ -298,11 +409,13 @@ const New_Customer = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Mobile"
+                label="Telephone"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                name="mobile"
-                value={values.mobile}
+                name="telephone"
+                value={values.telephone}
+                error={!!touched.telephone && !!errors.telephone}
+                helperText={touched.telephone && errors.telephone}
                 sx={{
                   gridColumn: "span 4",
                   "& .MuiInputLabel-root.Mui-focused": {
@@ -350,6 +463,7 @@ const New_Customer = () => {
                 loadingPosition="end"
                 endIcon={<SaveIcon />}
                 variant="contained"
+                disabled={!isValid || isNameFieldEmpty}
                 type="submit"
                 sx={{
                   gridColumn: "span 4",

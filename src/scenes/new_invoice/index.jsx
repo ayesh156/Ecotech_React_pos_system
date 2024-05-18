@@ -11,8 +11,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataProduct, sampleCustomerData } from "../../data/mockData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -26,30 +25,36 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from "@mui/icons-material/Send";
+import Loader from "../../components/Loader";
 import { useNavigate } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import { Formik } from "formik";
 import * as yup from "yup";
-import SaveIcon from "@mui/icons-material/Save";
-import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const customerInitialValues = {
   name: "",
   email: "",
-  contact: "",
+  mobile: "",
 };
+
+const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
 
 const customerSchema = yup.object().shape({
   name: yup.string().required("required"),
+  mobile: yup.string().matches(phoneRegExp, "Phone number is not valid"),
 });
 
 const productInitialValues = {
   name: "",
   description: "",
-  buyingPrice: "",
-  sellingPrice: "",
+  buying_price: "",
+  selling_price: "",
 };
 
 const productSchema = yup.object().shape({
@@ -78,13 +83,26 @@ const New_Invoice = () => {
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [printLoading, setPrintLoading] = useState(false);
   const [sendLoading, setSendLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [productNameEmpty, setProductNameEmpty] = useState(true);
+  const [customerNameEmpty, setCustomerNameEmpty] = useState(true);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [invoiceError, setInvoiceError] = useState(null);
+  const [productData, setProductData] = useState({
+    name: "",
+    description: "",
+    buying_price: "",
+    selling_price: "",
+  });
+  const [customerData, setCustomerData] = useState({
+    name: "",
+  });
 
   const paidAmountChange = (event) => {
     const amount = parseFloat(event.target.value);
@@ -189,14 +207,23 @@ const New_Invoice = () => {
       : null;
 
     // Collect values from DataGrid rows
-    const productTable = gridRows.map((row) => ({
-      name: row.name,
-      description: row.description,
-      qty: row.qty,
-      price: row.price,
-      tax: row.tax,
-      amount: row.amount,
-    }));
+    const productTable = gridRows.map((row) => {
+      // Find the corresponding product data by name (or ID if available)
+      const productInfo = productData.find(
+        (product) => product.name === row.name
+      );
+
+      return {
+        name: row.name,
+        description: row.description,
+        qty: row.qty,
+        price: row.price,
+        tax: row.tax,
+        buying_price: productInfo
+          ? parseInt(productInfo.buying_price, 10) || 0
+          : 0,
+      };
+    });
 
     // Combine all collected values into one object
     const collectedData = {
@@ -215,55 +242,216 @@ const New_Invoice = () => {
     return collectedData;
   };
 
+  const fetchProduct = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getProducts?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setProductData(response.data.product);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+  }, [initialValuesSet, fetchProduct]);
+
+  const fetchInvoiceId = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getInvoiceId?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setInvoiceNumber(response.data.invoice_id);
+          setInvoiceError(null);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchInvoiceId();
+    }
+  }, [initialValuesSet, fetchInvoiceId]);
+
   const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = { ...values, user_email: U_EMAIL };
 
     setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
 
-      resetForm();
+    axios
+      .post(`${BASE_URL}/system-api/product`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-      setIsLoading(false);
-      setOpenNProduct(false);
-    }, 1000); // Change the timeout value as needed
+          // After saving the product, fetch the updated product data
+          fetchProduct();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setIsLoading(false);
+        setOpenNProduct(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
+
+  const fetchCustomer = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getCustomers?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setCustomerData(response.data.customer);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching customer data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchCustomer();
+    }
+  }, [initialValuesSet, fetchCustomer]);
 
   const saveCustomer = (values, { resetForm }) => {
-    const updatedValues = { ...values };
-
+    const updatedValues = {
+      ...values, // Include selected province in the saved object
+      user_email: U_EMAIL,
+    };
     setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
 
-      resetForm();
+    axios
+      .post(`${BASE_URL}/system-api/customer`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-      setIsLoading(false);
-      setOpenNCustomer(false);
-    }, 1000); // Change the timeout value as needed
+          // After saving the customer, fetch the updated customer data
+          fetchCustomer();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setIsLoading(false);
+        setOpenNCustomer(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
-  const printInvoice = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
+  useEffect(() => {
+    if (!toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [toastDisplayed, toastMsg, theme.palette.mode]);
+
+
+  const sendInvoice = () => {
+    if (!invoiceNumber) {
+      setInvoiceError("Invoice number required");
       return;
     }
 
-    setPrintLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-      console.log(collectedData);
+    if (isNaN(invoiceNumber)) {
+      setInvoiceError("Please enter a number");
+      return;
+    }
 
-      // Reset form data
-      resetInputs();
-
-      setPrintLoading(false);
-    }, 1000);
-  };
-
-  const sendInvoice = () => {
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -272,35 +460,63 @@ const New_Invoice = () => {
     }
 
     setSendLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-      console.log(collectedData);
 
-      // Reset form data
-      resetInputs();
+    const collectedData = collectData();
+    console.log(collectedData);
 
-      setSendLoading(false);
-    }, 1000);
-  };
+    axios
+      .post(`${BASE_URL}/system-api/invoice?email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-  const saveInvoice = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
-      return;
+          // After saving the product, fetch the updated product data
+          fetchProduct();
+
+          setTimeout(() => {
+            const invoiceId = response.data.invoice_id;
+            const encodedData = btoa(`${invoiceId},${U_EMAIL}`);
+            window.open(
+              `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`,
+              "_blank"
+            );
+          }, 1000);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        fetchInvoiceId();
+        resetInputs();
+        setSendLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
     }
-
-    setSaveLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-      console.log(collectedData);
-
-      // Reset form data
-      resetInputs();
-
-      setSaveLoading(false);
-    }, 1000);
   };
 
   const resetInputs = () => {
@@ -312,7 +528,6 @@ const New_Invoice = () => {
     setSelectedDueDate(null);
     setIsDueDateError(null);
     setSummary("");
-    setInvoiceNumber("");
     setNotes("");
     setPaymentInstructions("");
     setFooterNotes("");
@@ -375,7 +590,7 @@ const New_Invoice = () => {
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
     const taxAmount = (amount * tax) / 100;
-    const totalAmount = amount - taxAmount;
+    const totalAmount = amount + taxAmount;
     return totalAmount;
   };
 
@@ -404,8 +619,13 @@ const New_Invoice = () => {
     setOpen(false);
   };
 
+  if (!initialValuesSet) {
+    return <Loader />;
+  }
+
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -484,12 +704,10 @@ const New_Invoice = () => {
               <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={sampleCustomerData}
+                options={customerData}
                 value={
                   customer
-                    ? sampleCustomerData.find(
-                        (option) => option.name === customer
-                      )
+                    ? customerData.find((option) => option.name === customer)
                     : null
                 }
                 getOptionLabel={(option) => option.name}
@@ -532,8 +750,18 @@ const New_Invoice = () => {
               sx={{ alignSelf: "flex-end" }}
               value={invoiceNumber}
               onChange={(event) => {
-                setInvoiceNumber(event.target.value);
+                const value = event.target.value;
+                setInvoiceNumber(value);
+                if (!value) {
+                  setInvoiceError("Invoice number is required");
+                } else if (isNaN(value)) {
+                  setInvoiceError("Please enter a number");
+                } else {
+                  setInvoiceError(null);
+                }
               }}
+              error={!!invoiceError}
+              helperText={invoiceError}
             />
           </Box>
           <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
@@ -628,10 +856,10 @@ const New_Invoice = () => {
                     </Button>
                     <Autocomplete
                       key={fieldName}
-                      options={mockDataProduct}
+                      options={productData}
                       value={
                         newRow.name
-                          ? mockDataProduct.find(
+                          ? productData.find(
                               (option) => option.name === newRow.name
                             )
                           : null
@@ -643,7 +871,7 @@ const New_Invoice = () => {
                             ...prevRow,
                             name: newValue.name,
                             description: newValue.description,
-                            price: newValue.sellingPrice.toString(),
+                            price: newValue.selling_price.toString(),
                             qty: "1",
                           }));
                         } else {
@@ -847,47 +1075,6 @@ const New_Invoice = () => {
               setFooterNotes(event.target.value);
             }}
           />
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "10px",
-            }}
-          >
-            <LoadingButton
-              loading={printLoading}
-              loadingPosition="end"
-              endIcon={<FileCopyOutlinedIcon />}
-              variant="contained"
-              onClick={printInvoice}
-              sx={{
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Print
-            </LoadingButton>
-            <LoadingButton
-              loading={saveLoading}
-              loadingPosition="end"
-              endIcon={<SaveIcon />}
-              variant="contained"
-              onClick={saveInvoice}
-              sx={{
-                textTransform: "capitalize",
-                color: colors.grey[100],
-                backgroundColor: colors.blueAccent[700],
-                "&:hover": {
-                  backgroundColor: colors.blueAccent[600],
-                },
-              }}
-            >
-              Save
-            </LoadingButton>
             <LoadingButton
               loading={sendLoading}
               loadingPosition="end"
@@ -906,7 +1093,6 @@ const New_Invoice = () => {
             >
               Send invoice
             </LoadingButton>
-          </Box>
         </Box>
       </Box>
 
@@ -1018,10 +1204,7 @@ const New_Invoice = () => {
             >
               Close
             </Button>
-            <Button
-              onClick={saveEditedRow}
-              sx={{ color: colors.primary[100] }}
-            >
+            <Button onClick={saveEditedRow} sx={{ color: colors.primary[100] }}>
               Submit
             </Button>
           </DialogActions>
@@ -1049,6 +1232,7 @@ const New_Invoice = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1066,7 +1250,10 @@ const New_Invoice = () => {
                         type="text"
                         label="Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setProductNameEmpty(event.target.value.trim() === ""); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1103,8 +1290,8 @@ const New_Invoice = () => {
                         label="Buying Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.buyingPrice}
-                        name="buyingPrice"
+                        value={values.buying_price}
+                        name="buying_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1119,8 +1306,8 @@ const New_Invoice = () => {
                         label="Selling Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.sellingPrice}
-                        name="sellingPrice"
+                        value={values.selling_price}
+                        name="selling_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1142,6 +1329,7 @@ const New_Invoice = () => {
                     <LoadingButton
                       loading={isLoading} // Pass loading state to LoadingButton
                       type="submit"
+                      disabled={!isValid || productNameEmpty}
                       sx={{
                         textTransform: "capitalize", // Remove text transformation
                         backgroundColor: "transparent", // Remove background color
@@ -1185,6 +1373,7 @@ const New_Invoice = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1202,7 +1391,12 @@ const New_Invoice = () => {
                         type="text"
                         label="Customer Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setCustomerNameEmpty(
+                            event.target.value.trim() === ""
+                          ); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1237,8 +1431,10 @@ const New_Invoice = () => {
                         label="Phone"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.contact}
-                        name="contact"
+                        value={values.mobile}
+                        name="mobile"
+                        error={!!touched.mobile && !!errors.mobile}
+                        helperText={touched.mobile && errors.mobile}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1259,6 +1455,7 @@ const New_Invoice = () => {
                     </Button>
                     <LoadingButton
                       loading={isLoading} // Pass loading state to LoadingButton
+                      disabled={!isValid || customerNameEmpty}
                       type="submit"
                       sx={{
                         textTransform: "capitalize", // Remove text transformation

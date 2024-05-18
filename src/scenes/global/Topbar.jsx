@@ -6,9 +6,9 @@ import InputBase from "@mui/material/InputBase";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon  from "@mui/icons-material/DarkModeOutlined";
 import NotificationsOutlinedIcon  from "@mui/icons-material/NotificationsOutlined";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
 import SearchIcon from "@mui/icons-material/Search";
+import RoomPreferencesOutlinedIcon from '@mui/icons-material/RoomPreferencesOutlined';
 
 const Topbar = () => {
   const theme = useTheme();
@@ -44,9 +44,14 @@ const Topbar = () => {
           <NotificationsOutlinedIcon />
         </IconButton>
         </Link>
-        <Link to="/settings" style={{ textDecoration: 'none' }}>
+        <Link to="/profile" style={{ textDecoration: 'none' }}>
         <IconButton>
           <ManageAccountsOutlinedIcon />
+        </IconButton>
+        </Link>
+        <Link to="/settings" style={{ textDecoration: 'none' }}>
+        <IconButton>
+          <RoomPreferencesOutlinedIcon />
         </IconButton>
         </Link>
       </Box>

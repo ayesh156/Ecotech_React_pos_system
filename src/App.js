@@ -24,6 +24,7 @@ import PageNotFound from "./scenes/page_not_found";
 import NewInvoice from "./scenes/new_invoice";
 import EditInvoice from "./scenes/edit_invoice";
 import Settings from "./scenes/settings";
+import Profile from "./scenes/profile";
 import Calendar from "./scenes/calendar";
 import { useState } from "react";
 import Signin from "./scenes/signin";
@@ -73,6 +74,7 @@ function App() {
                 <Route path="/job-orders/create-job-order" element={<NewJobOrder />} />
                 <Route path="/job-orders/:id/edit" element={<EditJobOrder />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/bar" element={<Bar />} />

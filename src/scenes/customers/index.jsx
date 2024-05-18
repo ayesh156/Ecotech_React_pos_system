@@ -1,17 +1,29 @@
 import { Box, Button, useTheme } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { sampleCustomerData } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import Loader from "../../components/Loader";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
-const Product = () => {
+const Customer = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [customerData, setCustomerData] = useState({
+    id: "",
+    name: "",
+    email: "",
+    mobile: "",
+    balance: ""
+  },);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const columns = [
     {
@@ -26,7 +38,7 @@ const Product = () => {
       flex: 2,
     },
     {
-      field: "contact",
+      field: "mobile",
       headerName: "Phone",
       flex: 1,
     },
@@ -50,11 +62,49 @@ const Product = () => {
     },
   ];
 
-  useEffect(() => {
-    setTimeout(() => {
-      setInitialValuesSet(true);
-    }, 500);
+  const fetchCustomer = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getCustomers?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setCustomerData(response.data.customer);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching customer data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
   }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchCustomer();
+    }
+  }, [initialValuesSet, fetchCustomer]);
+
+  useEffect(() => {
+    if (initialValuesSet && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [initialValuesSet, toastDisplayed, toastMsg, theme.palette.mode]);
 
   if (!initialValuesSet) {
     return <Loader />;
@@ -62,6 +112,7 @@ const Product = () => {
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Box
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
@@ -111,10 +162,10 @@ const Product = () => {
           }
         }}
       >
-        <DataGrid rows={sampleCustomerData} columns={columns} />
+        <DataGrid rows={customerData} columns={columns} />
       </Box>
     </Box>
   );
 };
 
-export default Product;
+export default Customer;

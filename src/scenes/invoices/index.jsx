@@ -1,8 +1,7 @@
 import { Box, useTheme, Button, IconButton } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataContacts } from "../../data/mockData";
 import Header from "../../components/Header";
 import { Link } from "react-router-dom";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -12,6 +11,10 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import Loader from "../../components/Loader";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const Invoices = () => {
   const theme = useTheme();
@@ -19,15 +22,25 @@ const Invoices = () => {
   // State for selected date range and filtered data
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
-  const [filteredData, setFilteredData] = useState(mockDataContacts);
+  const [filteredData, setFilteredData] = useState([]);
+  const [productData, setProductData] = useState({
+    invoice_id: "",
+    name: "",
+    date: "",
+    due_date: "",
+    due_amount: "",
+    total_amount: "",
+  });
   const [showCloseStartDate, setShowCloseStartDate] = useState(false);
   const [showCloseEndDate, setShowCloseEndDate] = useState(false);
   const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const columns = [
-    { field: "invoiceNumber", headerName: "Invoice Number", flex: 1 },
+    { field: "invoice_id", headerName: "Invoice Number", flex: 1 },
     {
-      field: "customer",
+      field: "name",
       headerName: "Customer",
       flex: 1,
       cellClassName: "name-column--cell",
@@ -38,18 +51,18 @@ const Invoices = () => {
       flex: 1,
     },
     {
-      field: "dueDate",
+      field: "due_date",
       headerName: "Due Date",
       flex: 1,
     },
     {
-      field: "dueAmount",
+      field: "due_amount",
       headerName: "Due Amount (Rs.)",
       type: "number",
       flex: 1,
     },
     {
-      field: "totalAmount",
+      field: "total_amount",
       headerName: "Total Amount (Rs.)",
       type: "number",
       flex: 1,
@@ -68,11 +81,50 @@ const Invoices = () => {
     },
   ];
 
-  useEffect(() => {
-    setTimeout(() => {
-      setInitialValuesSet(true);
-    }, 500);
+  const fetchInvoice = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getInvoice?email=${U_EMAIL}`)
+      .then(function (response) {
+        console.log(response.data.invoice);
+        if (response.data.status === 1) {
+          setProductData(response.data.invoice);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching invoice data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
   }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchInvoice();
+    }
+  }, [initialValuesSet, fetchInvoice]);
+
+  useEffect(() => {
+    if (initialValuesSet && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [initialValuesSet, toastDisplayed, toastMsg, theme.palette.mode]);
 
   useEffect(() => {
     if (!selectedStartDate) {
@@ -95,13 +147,7 @@ const Invoices = () => {
 
   // Filter data based on selected date range
   useEffect(() => {
-    if (
-      selectedStartDate &&
-      selectedStartDate.$y &&
-      selectedEndDate &&
-      selectedEndDate.$y
-    ) {
-      // Convert selectedStartDate and selectedEndDate to Date objects
+    if (selectedStartDate && selectedEndDate) {
       const startDate = new Date(
         selectedStartDate.$y,
         selectedStartDate.$M,
@@ -112,20 +158,43 @@ const Invoices = () => {
         selectedEndDate.$M,
         selectedEndDate.$D
       );
-
-      const filtered = mockDataContacts.filter((item) => {
-        // Convert item.date to a Date object
+  
+      const filtered = productData.filter((item) => {
         const itemDate = new Date(item.date);
-
-        // Compare item.date with selectedStartDate and selectedEndDate
         return itemDate >= startDate && itemDate <= endDate;
       });
-
+  
+      setFilteredData(filtered);
+    } else if (selectedStartDate) {
+      const startDate = new Date(
+        selectedStartDate.$y,
+        selectedStartDate.$M,
+        selectedStartDate.$D
+      );
+  
+      const filtered = productData.filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate;
+      });
+  
+      setFilteredData(filtered);
+    } else if (selectedEndDate) {
+      const endDate = new Date(
+        selectedEndDate.$y,
+        selectedEndDate.$M,
+        selectedEndDate.$D
+      );
+  
+      const filtered = productData.filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate <= endDate;
+      });
+  
       setFilteredData(filtered);
     } else {
-      setFilteredData(mockDataContacts);
+      setFilteredData(productData);
     }
-  }, [selectedStartDate, selectedEndDate]);
+  }, [selectedStartDate, selectedEndDate, productData]);
 
   if (!initialValuesSet) {
     return <Loader />;
@@ -133,6 +202,7 @@ const Invoices = () => {
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Box
         sx={{ display: "flex", justifyContent: "space-between", gap: "100px" }}
       >
@@ -266,7 +336,7 @@ const Invoices = () => {
         }}
       >
         <DataGrid
-          rows={filteredData}
+          rows={selectedStartDate || selectedEndDate ? filteredData : productData}
           columns={columns}
           components={{ Toolbar: GridToolbar }}
         />
