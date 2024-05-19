@@ -276,12 +276,12 @@ switch ($method) {
                         $mail->IsSMTP();
                         $mail->Host = 'smtp.gmail.com';
                         $mail->SMTPAuth = true;
-                        $mail->Username = 'nebulainfinitex@gmail.com';
-                        $mail->Password = 'inkdlycpnwbmdcdd'; // Enter your SMTP password here
+                        $mail->Username = 'sender email';
+                        $mail->Password = ' '; // Enter your SMTP password here
                         $mail->SMTPSecure = 'ssl';
                         $mail->Port = 465;
-                        $mail->setFrom('nebulainfinitex@gmail.com', 'Nebulainfinite Team');
-                        $mail->addReplyTo('nebulainfinitex@gmail.com', 'Nebulainfinite Team');
+                        $mail->setFrom('sender email', 'sender');
+                        $mail->addReplyTo('sender email', 'sender');
                         $mail->addAddress($data['email']);
                         $mail->isHTML(true);
                         $mail->Subject = 'Invoice_#' . $invoiceNumber;
@@ -655,12 +655,12 @@ switch ($method) {
                         $mail->IsSMTP();
                         $mail->Host = 'smtp.gmail.com';
                         $mail->SMTPAuth = true;
-                        $mail->Username = 'nebulainfinitex@gmail.com';
-                        $mail->Password = 'inkdlycpnwbmdcdd'; // Enter your SMTP password here
+                        $mail->Username = 'sender email';
+                        $mail->Password = ' '; // Enter your SMTP password here
                         $mail->SMTPSecure = 'ssl';
                         $mail->Port = 465;
-                        $mail->setFrom('nebulainfinitex@gmail.com', 'Nebulainfinite Team');
-                        $mail->addReplyTo('nebulainfinitex@gmail.com', 'Nebulainfinite Team');
+                        $mail->setFrom('sender email', 'sender');
+                        $mail->addReplyTo('sender email', 'sender');
                         $mail->addAddress($data['email']);
                         $mail->isHTML(true);
                         $mail->Subject = 'Invoice_#' . $invoiceNumber;
