@@ -1,4 +1,4 @@
-import { Box, useTheme, Button, IconButton } from "@mui/material";
+import { Box, useTheme, Button, IconButton, Tooltip  } from "@mui/material";
 import { useState, useEffect, useCallback } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
@@ -10,11 +10,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
+import FeedIcon from '@mui/icons-material/Feed';
 import Loader from "../../components/Loader";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BASE_URL, U_EMAIL } from "../../config";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 const Invoices = () => {
   const theme = useTheme();
@@ -38,7 +40,47 @@ const Invoices = () => {
   const [toastMsg, setToastMsg] = useState("");
 
   const columns = [
-    { field: "invoice_id", headerName: "Invoice Number", flex: 1 },
+    {
+      field: "status",
+      headerName: "Status",
+      flex: 0.6,
+      renderCell: (params) => {
+        const { due_amount, total_amount, due_date } = params.row;
+        const dueDate = new Date(due_date);
+        const currentDate = new Date();
+
+        let status = "Unpaid";
+        if (due_amount <= 0) {
+          status = "Paid";
+        } else if (due_amount < total_amount && currentDate > dueDate) {
+          status = "Overdue";
+        } else if (due_amount === total_amount) {
+          status = "Unpaid";
+        }
+
+        return (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              borderRadius: "5px",
+              paddingY: "3px",
+              paddingX: "10px",
+              fontWeight: "bold",
+              backgroundColor:
+                status === "Paid"
+                  ? colors.blueAccent[500]
+                  : status === "Overdue"
+                  ? colors.redAccent[500]
+                  : colors.greenAccent[500],
+            }}
+          >
+            {status}
+          </Box>
+        );
+      },
+    },
+    { field: "invoice_id", headerName: "Invoice Number", flex: 0.6 },
     {
       field: "name",
       headerName: "Customer",
@@ -48,12 +90,12 @@ const Invoices = () => {
     {
       field: "date",
       headerName: "Date",
-      flex: 1,
+      flex: 0.6,
     },
     {
       field: "due_date",
       headerName: "Due Date",
-      flex: 1,
+      flex: 0.6,
     },
     {
       field: "due_amount",
@@ -68,6 +110,30 @@ const Invoices = () => {
       flex: 1,
     },
     {
+      field: "copy",
+      headerName: "Copy",
+      flex: 0.3,
+      renderCell: (params) => (
+        <Tooltip title="Copy to Clipboard">
+          <IconButton onClick={() => handleCopyLink(params.row.invoice_id)}>
+            <ContentCopyIcon style={{ color: colors.blueAccent[500] }} />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
+    {
+      field: "view",
+      headerName: "View",
+      flex: 0.3,
+      renderCell: (params) => (
+        <Link onClick={() => viewInvoice(params.row.id)}>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <FeedIcon style={{ color: colors.blueAccent[500] }} />
+          </Box>
+        </Link>
+      ),
+    },
+    {
       field: "edit",
       headerName: "Edit",
       flex: 0.3,
@@ -80,6 +146,44 @@ const Invoices = () => {
       ),
     },
   ];
+
+  const viewInvoice = (e) => {
+    const invoiceId = e;
+    const encodedData = btoa(`${invoiceId},${U_EMAIL}`);
+    window.open(
+      `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`,
+      "_blank"
+    );
+  };
+
+  const handleCopyLink = (invoiceId) => {
+    const encodedData = btoa(`${invoiceId},${U_EMAIL}`);
+    const link = `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`;
+    // const link = `https://nebulainfinite.com/system-api/invoice_pdf?data=${encodedData}`;
+    navigator.clipboard.writeText(link).then(() => {
+      toast.success("Link copied to clipboard!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }).catch((error) => {
+      toast.error("Failed to copy the link!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    });
+  };
 
   const fetchInvoice = useCallback(() => {
     axios
@@ -158,12 +262,12 @@ const Invoices = () => {
         selectedEndDate.$M,
         selectedEndDate.$D
       );
-  
+
       const filtered = productData.filter((item) => {
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
       });
-  
+
       setFilteredData(filtered);
     } else if (selectedStartDate) {
       const startDate = new Date(
@@ -171,12 +275,12 @@ const Invoices = () => {
         selectedStartDate.$M,
         selectedStartDate.$D
       );
-  
+
       const filtered = productData.filter((item) => {
         const itemDate = new Date(item.date);
         return itemDate >= startDate;
       });
-  
+
       setFilteredData(filtered);
     } else if (selectedEndDate) {
       const endDate = new Date(
@@ -184,12 +288,12 @@ const Invoices = () => {
         selectedEndDate.$M,
         selectedEndDate.$D
       );
-  
+
       const filtered = productData.filter((item) => {
         const itemDate = new Date(item.date);
         return itemDate <= endDate;
       });
-  
+
       setFilteredData(filtered);
     } else {
       setFilteredData(productData);
@@ -336,7 +440,9 @@ const Invoices = () => {
         }}
       >
         <DataGrid
-          rows={selectedStartDate || selectedEndDate ? filteredData : productData}
+          rows={
+            selectedStartDate || selectedEndDate ? filteredData : productData
+          }
           columns={columns}
           components={{ Toolbar: GridToolbar }}
         />

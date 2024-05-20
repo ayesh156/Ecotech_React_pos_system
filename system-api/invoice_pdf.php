@@ -32,15 +32,15 @@ if (isset($_GET['data'])) {
 	$user_rs = Database::search("SELECT * FROM user WHERE email = '$email'");
 	$user_data = $user_rs->fetch_assoc();
 
-	$data_rs = Database::search("SELECT invoice_id AS id, TRIM(customer.name) AS name, date, due_date, email, mobile, instruction, notes, footer FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE invoice.id = $id");
+	$data_rs = Database::search("SELECT invoice_id AS id, TRIM(customer.name) AS name, date, due_date, email, mobile, instruction, notes, footer, paid_amount FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE invoice.id = $id");
 	$data = $data_rs->fetch_assoc();
 
 	$i_items_rs = Database::search("SELECT * FROM invoice_item WHERE invoice_id = '$id'");
 	$i_items_num = $i_items_rs->num_rows;
 
 	// Initialize variables to store tax total and grand total
-	$i_taxTotal = 0;
-	$i_subTotal = 0;
+	$taxTotal = 0;
+	$subTotal = 0;
 
 	// Check if there are any invoice items
 	if ($i_items_num > 0) {
@@ -57,65 +57,83 @@ if (isset($_GET['data'])) {
 			$i_taxAmount = ($i_totalPrice * $i_tax) / 100;
 
 			// Add tax amount to tax total
-			$i_taxTotal += $i_taxAmount;
+			$taxTotal += $i_taxAmount;
 
 			// Add total price (including tax) to grand total
-			$i_subTotal += $i_totalPrice;
+			$subTotal += $i_totalPrice;
 
 		}
 	}
 
-	$i_totalAmount = $i_subTotal + $i_taxTotal;
+	$totalAmount = $subTotal + $taxTotal;
+
+	$dueAmount = $totalAmount - $data['paid_amount'];
+
+	// Ensure the due amount is not negative
+	if ($dueAmount < 0) {
+		$dueAmount = 0;
+	}
 
 	// create new PDF document
 
 	$html = '
-<table style="padding: 15px;">
+<table style="padding: 15px 0px 15px 15px;">
 	<tbody>
-	<tr style="padding: 15px;">
-    <td style="padding: 15px; width: 105px;"><img src="' . $user_data['company_image'] . '"/></td>
-	<td  style="padding: 15px;">
-	<span style="font-size: 20px;">' . $user_data['company_name'] . '</span>
+	<tr>
+    <td style="width: 70px;"><img src="' . $user_data['company_image'] . '"/></td>
+	<td style="width: 381px;">
+	<span style="font-size: 18px;">' . $user_data['company_name'] . '</span>
 	<br/>
-	<span style="color: #9E9E9E;">' . $user_data['company_address'] . '</span>
+	<span style="color: #9E9E9E;font-size: 12px;">' . $user_data['company_address'] . '</span>
 	</td>
-	<td style="padding: 15px;width: 355px;" align="right">
+	<td style="width: 257px;" align="right">
 	<span style="font-size: 16px;">Contact information</span><br/>
-	<span style="color: #9E9E9E;">' . $user_data['company_email'] . '</span><br/>
-	<span style="color: #9E9E9E;">' . $user_data['company_mobile'] . '</span>
+	<span style="color: #9E9E9E; font-size: 12px;">' . $user_data['company_email'] . '</span><br/>
+	<span style="color: #9E9E9E; font-size: 12px;">' . $user_data['company_mobile'] . '</span>
 	</td>
 	</tr>
 	</tbody>
 	</table>
-    <hr />
+	
+	<table style="padding: 0 7px 0 0;">
+	<tbody>
+	<tr>
+	<td colspan="4">
+	<hr style="color: #9E9E9E;" />
+	</td>
+	</tr>
+	
+	</tbody>
+	</table>
 	';
 	$html .= '
-	<table style="padding: 15px;">
+	<table style="padding: 0 15px 5px 15px;">
 	<tbody>
-	<tr style="padding: 15px;">
-	<td style="padding: 15px;">
-	<span style="font-size: 22px;">' . explode(" ", $user_data['company_name'])[0] . ' INVOICE</span>
+	<tr>
+	<td>
+	<span style="font-size: 16px;">' . explode(" ", $user_data['company_name'])[0] . ' INVOICE</span>
 	<br/>
-	<span style="color: #9E9E9E;font-size: 18px;">' . $user_data['company_name'] . '</span>
+	<span style="color: #9E9E9E;font-size: 12px;">' . $user_data['company_name'] . '</span>
 	</td>
-	<td style="padding: 15px;" align="right">
-	<span style="font-size: 17px;">Amount Due (LKR)</span>
+	<td align="right">
+	<span style="font-size: 12px;">Amount Due (LKR)</span>
 	<br/>
-	<span style="font-size: 25px; font-weight: bold;">' . number_format($i_totalAmount, 2) . '</span>
+	<span style="font-size: 18px; font-weight: bold;">' . number_format($dueAmount, 2) . '</span>
 	</td>
 	</tr>
 	</tbody>
 	</table>
 	';
+
 	$html .= '
-	<table style="padding: 0 15px 15px 15px;">
+	<table style="padding: 0 15px 15px 15px; font-size: 11px;">
 	<tbody>
-	<tr style="padding: 15px;">
-	<td style="padding: 15px;"><span style="color: #9E9E9E;">Bill to: </span>' . $data['name'] . '<br/>
+	<tr>
+	<td style="width: 564px;"><span style="color: #9E9E9E;">Bill to: </span>' . $data['name'] . '<br/>
 	<span style="color: #9E9E9E;">Email: </span>' . $data['email'] . '<br/>
 	<span style="color: #9E9E9E;">Phone: </span>' . $data['mobile'] . '
 	</td>
-	<td style="padding: 15px;" align="right">
+	<td style="width: 200px;">
 	<span style="color: #9E9E9E;">Invoice Number: </span>' . $data['id'] . '<br/>
 	<span style="color: #9E9E9E;">Invoice Date: </span>' . $data['date'] . '<br/>
 	<span style="color: #9E9E9E;">Payment Due: </span>' . $data['due_date'] . '
@@ -124,24 +142,21 @@ if (isset($_GET['data'])) {
 	</tbody>
 	</table>
 	';
+	
 	$html .= '
-	<table style="padding: 15px;">
+	<table style="padding: 5px 8px 5px 15px">
 	<thead>
 	<tr style="font-weight:bold;background-color: #F5F5FF;">
-    <th style="border-bottom: 1px solid #222; width: 350px;">Items</th>
-    <th style="border-bottom: 1px solid #222; text-align: center; width: 77px;">Quantity</th>
-    <th style="border-bottom: 1px solid #222; text-align: center; width: 130px;">Price</th>
-    <th style="border-bottom: 1px solid #222; text-align: center; width: 150px;">Amount</th>
+    <th style="border-bottom: 1px solid #9E9E9E; width: 378px;">Items</th>
+    <th style="border-bottom: 1px solid #9E9E9E; text-align: center; width: 75px;">Quantity</th>
+    <th style="border-bottom: 1px solid #9E9E9E; text-align: center; width: 110px;">Price</th>
+    <th style="border-bottom: 1px solid #9E9E9E; text-align: right; width: 160px;">Amount</th>
 	</tr>
 	</thead>
 	<tbody>';
 
 	$invoice_items_rs = Database::search("SELECT * FROM invoice_item WHERE invoice_id = '$id'");
 	$invoice_items_num = $invoice_items_rs->num_rows;
-
-	// Initialize variables to store tax total and grand total
-	$taxTotal = 0;
-	$subTotal = 0;
 
 	// Check if there are any invoice items
 	if ($invoice_items_num > 0) {
@@ -155,25 +170,18 @@ if (isset($_GET['data'])) {
 			$price = $row['selling_price']; // Assuming 'price' is stored as 'selling_price' in the database
 			$totalPrice = $qty * $price;
 
-			// Calculate tax for this item
-			$tax = $row['tax'];
-			$taxAmount = ($totalPrice * $tax) / 100;
-
-			// Add tax amount to tax total
-			$taxTotal += $taxAmount;
-
-			// Add total price (to grand total
-			$subTotal += $totalPrice;
+			 // Determine if this is the last item
+			 $borderStyle = ($i === $invoice_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
 
 			// Add HTML code for this item to the $html string
 			$html .= '<tr>';
-			$html .= '<td style="border-bottom: 1px solid #222; width: 350px;">';
+			$html .= '<td style="'.$borderStyle.' width: 378px;">';
 			$html .= '<span>' . $itemName . '</span><br/>';
 			$html .= '<span style="color: #9E9E9E;">' . $itemDescription . '</span>';
 			$html .= '</td>';
-			$html .= '<td style="border-bottom: 1px solid #222; text-align: right; width: 70px;">' . $qty . '</td>';
-			$html .= '<td style="border-bottom: 1px solid #222; text-align: right; width: 130px;">LKR ' . number_format($price, 2) . '</td>';
-			$html .= '<td style="border-bottom: 1px solid #222; text-align: right; width: 150px;">LKR ' . number_format($totalPrice, 2) . '</td>';
+			$html .= '<td style="'.$borderStyle.' text-align: center; width: 75px; color: #2d3436;">' . $qty . '</td>';
+			$html .= '<td style="'.$borderStyle.' text-align: right; width: 110px; color: #2d3436;">LKR ' . number_format($price, 2) . '</td>';
+			$html .= '<td style="'.$borderStyle.' text-align: right; width: 160px; color: #2d3436;">LKR ' . number_format($totalPrice, 2) . '</td>';
 			$html .= '</tr>';
 		}
 	} else {
@@ -181,34 +189,42 @@ if (isset($_GET['data'])) {
 		$html .= '<tr><td colspan="4">No items found</td></tr>';
 	}
 
-	$totalAmount = $subTotal + $taxTotal;
 
 	$html .= '</tbody>
 </table>';
 	$html .= '
-    <table style="padding: 15px;">
+    <table style="padding: 6px 17px 6px 9px;">
+	<hr style="color: #9E9E9E;" />
     <tbody>
-	<tr style="padding: 15px;">
-    <td style="padding: 15px;"><span>Payment Instruction</span><br/>
+	<tr>
+    <td><span>Payment Instruction</span><br/>
 	<span style="color: #9E9E9E;">' . $data['instruction'] . '</span>
 	</td>
-	<td align="right"><strong>Sub Total: LKR  ' . number_format($subTotal, 2) . '</strong><br/><strong>Total tax: LKR ' . number_format($taxTotal, 2) . '</strong><br/><strong>Grand total: LKR ' . number_format($totalAmount, 2) . '</strong></td>
+	<td align="right"><strong>Grand Total: LKR ' . number_format($totalAmount, 2) . '</strong></td>
 	</tr>
+	</tbody>
+</table>';
+
+// Check if the notes is not empty
+$notesText = !empty($data['notes']) ? '<br/>' . $data['notes']  : '';
+// Check if the footer is not empty
+$footerText = !empty($data['footer']) ? $data['footer'] . '<br/>' : '';
+
+	$html .= '
+    <table style="padding: 5px 18px 5px 9px;">
+    <tbody>
 	<tr>
-	<td style="padding: 15px;" colspan="4">
-	<span style="font-size:16px;">Notes / Terms<br/></span>
-	<span style="color: #9E9E9E;">PLEASE PRODUSE THE INVOICE FOR WARRANTY. NO WARRANTY FOR CHIP BURNS, PHYSICAL DAMAGE OR CORROSION. Warranty covers only manufacturer\'s defects. Damage or defect due to other causes such as negligence, misuses, improper operation, power fluctuation, lightening, or other natural disasters, sabotage, or accident etc. (01M) = 30 Days, (03M) = 90 Days, (06M) = 180 Days, (01Y) = 350 Days, (02Y) = 700 Days, (03Y) = 1050 Days, (05Y) = 1750 Days, (10Y) = 3500 Days, (L/W) = Lifetime Warranty. (N/W) = No Warranty).</span><br/>
-	<span style="color: #9E9E9E;">' . $data['notes'] . '</span>
+	<td colspan="4">
+	<span style="font-size:12px;">Notes / Terms<br/></span>
+	<span style="color: #9E9E9E;">PLEASE PRODUSE THE INVOICE FOR WARRANTY. NO WARRANTY FOR CHIP BURNS, PHYSICAL DAMAGE OR CORROSION. Warranty covers only manufacturer\'s defects. Damage or defect due to other causes such as negligence, misuses, improper operation, power fluctuation, lightening, or other natural disasters, sabotage, or accident etc. (01M) = 30 Days, (03M) = 90 Days, (06M) = 180 Days, (01Y) = 350 Days, (02Y) = 700 Days, (03Y) = 1050 Days, (05Y) = 1750 Days, (10Y) = 3500 Days, (L/W) = Lifetime Warranty. (N/W) = No Warranty).</span><span style="color: #9E9E9E;">' . $notesText . '</span>
 	</td>
 	</tr>
     <tr>
-	<td style="padding: 15px;" colspan="4">
-	<span style="font-size:16px;">Footer:<br/></span>
-	<span style="color: #9E9E9E;">' . $data['footer'] . '<br/></span>
-	<span style="color: #9E9E9E;">We know the world is full of choices. Thank you for selecting us.<br/></span>
+	<td colspan="4">
+	<span style="font-size:12px;">Footer:<br/></span>
+	<span style="color: #9E9E9E;">' . $footerText . '</span><span style="color: #9E9E9E;">We know the world is full of choices. Thank you for selecting us.<br/></span>
 	</td>
 	</tr>
-    
 	</tbody>
 	</table>
 	';
@@ -217,7 +233,7 @@ if (isset($_GET['data'])) {
 	$pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 	// set default monospaced font
 // set margins
-	$pdf->SetMargins(5, 5, -1);
+	$pdf->SetMargins(2, 3, -2, true);
 	// remove default header/footer
 	$pdf->setPrintHeader(false);
 	$pdf->setPrintFooter(false);
@@ -233,7 +249,8 @@ if (isset($_GET['data'])) {
 	// helvetica or times to reduce file size.
 	$fontname = TCPDF_FONTS::addTTFfont('tcpdf/fonts/Roboto-Medium.ttf', 'TrueTypeUnicode', '', 96);
 	$fontbold = TCPDF_FONTS::addTTFfont('tcpdf/fonts/Roboto-Bold.ttf', 'TrueTypeUnicode', '', 96);
-	$pdf->SetFont($fontname, '', 10);
+	$pdf->SetFont($fontname, '', 8);
+	
 	$pdf->AddPage();
 	// Print text using writeHTMLCell()
 	$pdf->writeHTMLCell(0, 0, '', '', $html, 0, 0, 0, true, '', true);
