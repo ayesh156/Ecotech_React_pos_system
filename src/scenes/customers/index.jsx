@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import Loader from "../../components/Loader";
 import axios from "axios";
@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { BASE_URL, U_EMAIL } from "../../config";
 
 const Customer = () => {
+  const navigate = useNavigate();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [initialValuesSet, setInitialValuesSet] = useState(false);
@@ -31,6 +32,11 @@ const Customer = () => {
       headerName: "Name",
       flex: 1.5,
       cellClassName: "name-column--cell",
+      renderCell: (params) => (
+        <Button onClick={() => editCustomers(params.row.id)} className="name-column--cell" style={{textTransform:"capitalize"}}>
+          {params.value}
+        </Button>
+      )
     },
     {
       field: "email",
@@ -61,6 +67,10 @@ const Customer = () => {
       ),
     },
   ];
+
+  const editCustomers = (id) => {
+    navigate(`${id}/edit`);
+  };
 
   const fetchCustomer = useCallback(() => {
     axios

@@ -10,7 +10,7 @@ $email = $_GET['email'] ?? null;
 // Check if the email parameter is provided
 if ($email !== null) {
     if (isset($email)) {
-        $invoice_rs = Database::search("SELECT MAX(invoice.invoice_id) as last_id FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE user_email = '$email'");
+        $invoice_rs = Database::search("SELECT MAX(invoice.invoice_id) as last_id FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE customer.user_email = '$email'");
         $invoice_row = $invoice_rs->fetch_assoc();
 
         // Check if there are any invoices for this user

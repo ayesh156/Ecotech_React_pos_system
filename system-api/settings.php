@@ -28,6 +28,9 @@ switch ($method) {
                         'email' => $row['company_email'],
                         'address' => $row['company_address'],
                         'contact' => $row['company_mobile'],
+                        'footerNotes' => $row['footer'],
+                        'notes' => $row['notes'],
+                        'paymentInstructions' => $row['instruction'],
                         'image' => $row['company_image']
                     ];
                 }
@@ -59,6 +62,9 @@ switch ($method) {
             $com_email = $data->email;
             $address = $data->address;
             $com_contact = $data->contact;
+            $footer_notes = $data->footerNotes;
+            $notes = $data->notes;
+            $p_instructions = $data->paymentInstructions;
             $base64Image = $data->image ?? null;
 
             $sql_select = "SELECT company_image FROM user WHERE email='$email'";
@@ -79,7 +85,7 @@ switch ($method) {
                     }
                 }
 
-                $sql_update = "UPDATE user SET company_name='$name', company_email='$com_email', company_address='$address', company_mobile='$com_contact', company_image='$uploadedImagePath' WHERE email='$email'";
+                $sql_update = "UPDATE user SET company_name='$name', company_email='$com_email', company_address='$address', company_mobile='$com_contact', company_image='$uploadedImagePath', footer='$footer_notes', notes='$notes', instruction='$p_instructions' WHERE email='$email'";
                 $status_update = Database::iud($sql_update);
 
                 $response = $status_update ? 

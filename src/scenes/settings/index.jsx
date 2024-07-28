@@ -47,6 +47,9 @@ const Settings = () => {
   const [toastMsg, setToastMsg] = useState("");
   const [toastMsg2, setToastMsg2] = useState("");
   const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [paymentInstructions, setPaymentInstructions] = useState("");
+  const [footerNotes, setFooterNotes] = useState("");
   const [initialValues, setInitialValues] = useState({
     name: "",
     email: "",
@@ -56,7 +59,7 @@ const Settings = () => {
   });
 
   const getFileNameFromPath = (path) => {
-    const pathSegments = path.split('/');
+    const pathSegments = path.split("/");
     return pathSegments[pathSegments.length - 1];
   };
 
@@ -67,8 +70,17 @@ const Settings = () => {
         if (response.data.status === 1) {
           const userData = response.data.settings;
           setInitialValues(userData);
-          setSelectedImage(userData.image === "" ? userData.image : "../../" + userData.image);
-          setFileName(userData.image === "" ? "No selected file" : getFileNameFromPath("../../" + userData.image));
+          setFooterNotes(userData.footerNotes);
+          setPaymentInstructions(userData.paymentInstructions);
+          setNotes(userData.notes);
+          setSelectedImage(
+            userData.image === "" ? userData.image : "../../" + userData.image
+          );
+          setFileName(
+            userData.image === ""
+              ? "No selected file"
+              : getFileNameFromPath("../../" + userData.image)
+          );
           setResultFound(true);
           setMsgDisplayed(true);
         } else {
@@ -110,12 +122,13 @@ const Settings = () => {
   }, [setResultFound, toastDisplayed, toastMsg, theme.palette.mode]);
 
   const saveSettings = (values, { resetForm }) => {
-    const updatedValues = { ...values, image: selectedImage };
+    const updatedValues = { ...values, notes, paymentInstructions, footerNotes, image: selectedImage };
+    // console.log(updatedValues);
     setIsLoading(true);
     axios
       .put(`${BASE_URL}/system-api/settings?email=${U_EMAIL}`, updatedValues)
       .then((response) => {
-        if ((response.data.status === 1)) {
+        if (response.data.status === 1) {
           toast.success(response.data.message, {
             position: "top-right",
             autoClose: 5000,
@@ -126,7 +139,7 @@ const Settings = () => {
             progress: undefined,
             theme: theme.palette.mode === "dark" ? "dark" : "light",
           });
-        }else {
+        } else {
           setToastMsg2(response.data.message);
         }
       })
@@ -137,7 +150,7 @@ const Settings = () => {
         setIsLoading(false);
       });
 
-      if(toastMsg2 !== ""){
+    if (toastMsg2 !== "") {
       toast.error(toastMsg2, {
         position: "top-right",
         autoClose: 5000,
@@ -196,7 +209,7 @@ const Settings = () => {
           handleChange,
           handleSubmit,
           setFieldValue,
-          isValid
+          isValid,
         }) => (
           <form onSubmit={handleSubmit}>
             <Box
@@ -247,9 +260,7 @@ const Settings = () => {
                     accept="image/*"
                     className="input-field"
                     hidden
-                    onChange={(event) =>
-                      selectImage(event, setFieldValue)
-                    }
+                    onChange={(event) => selectImage(event, setFieldValue)}
                   />
                   {selectedImage ? (
                     <img src={selectedImage} height={230} alt={fileName} />
@@ -360,12 +371,52 @@ const Settings = () => {
                   },
                 }}
               />
+              <TextField
+                label="Notes"
+                multiline
+                rows={4}
+                fullWidth
+                color="secondary"
+                onChange={(event) => {
+                  setNotes(event.target.value);
+                }}
+                value={notes}
+                sx={{ gridColumn: "span 4", }}
+              />
+              <TextField
+                label="Payment Instructions"
+                multiline
+                rows={4}
+                fullWidth
+                color="secondary"
+                onChange={(event) => {
+                  setPaymentInstructions(event.target.value);
+                }}
+                value={paymentInstructions}
+                sx={{ gridColumn: "span 4", }}
+              />
+              <TextField
+                label="Footer notes"
+                multiline
+                rows={4}
+                fullWidth
+                color="secondary"
+                onChange={(event) => {
+                  setFooterNotes(event.target.value);
+                }}
+                value={footerNotes}
+                sx={{ gridColumn: "span 4", }}
+              />
               <LoadingButton
                 loading={isLoading}
                 loadingPosition="end"
                 endIcon={<SaveIcon />}
                 variant="contained"
-                disabled={!isValid || (!values.email && touched.email) || (!values.contact && touched.contact)}
+                disabled={
+                  !isValid ||
+                  (!values.email && touched.email) ||
+                  (!values.contact && touched.contact)
+                }
                 type="submit"
                 sx={{
                   gridColumn: "span 4",

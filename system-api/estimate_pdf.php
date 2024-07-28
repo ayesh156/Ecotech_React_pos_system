@@ -24,7 +24,7 @@ if (isset($_GET['data'])) {
 	// Replace with your chosen encoding method (Base64 recommended)
 	$decodedData = base64_decode($encodedData); // Base64 decode
 
-	$data = explode(",", $decodedData); // Split the decoded string back to invoiceId and email
+	$data = explode(",", $decodedData); // Split the decoded string back to estimateId and email
 
 	$id = $data[0];
 	$email = $data[1];
@@ -32,19 +32,19 @@ if (isset($_GET['data'])) {
 	$user_rs = Database::search("SELECT * FROM user WHERE email = '$email'");
 	$user_data = $user_rs->fetch_assoc();
 
-	$data_rs = Database::search("SELECT invoice_id AS id, TRIM(customer.name) AS name, date, due_date, email, mobile, instruction, notes, footer, paid_amount FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE invoice.id = $id");
+	$data_rs = Database::search("SELECT estimate_id AS id, TRIM(customer.name) AS name, date, due_date, email, mobile, instruction, notes, footer, paid_amount FROM estimate INNER JOIN customer ON estimate.customer_id = customer.id WHERE estimate.id = $id");
 	$data = $data_rs->fetch_assoc();
 
-	$i_items_rs = Database::search("SELECT * FROM invoice_item WHERE invoice_id = '$id'");
+	$i_items_rs = Database::search("SELECT * FROM estimate_item WHERE estimate_id = '$id'");
 	$i_items_num = $i_items_rs->num_rows;
 
 	// Initialize variables to store tax total and grand total
 	$taxTotal = 0;
 	$subTotal = 0;
 
-	// Check if there are any invoice items
+	// Check if there are any estimate items
 	if ($i_items_num > 0) {
-		// Loop through each invoice item
+		// Loop through each estimate item
 		for ($n = 0; $n < $i_items_num; $n++) {
 			$i_row = $i_items_rs->fetch_assoc();
 
@@ -111,7 +111,7 @@ if (isset($_GET['data'])) {
 	<tbody>
 	<tr>
 	<td>
-	<span style="font-size: 16px;">' . explode(" ", $user_data['company_name'])[0] . ' INVOICE</span>
+	<span style="font-size: 16px;">' . explode(" ", $user_data['company_name'])[0] . ' ESTIMATE</span>
 	<br/>
 	<span style="color: #9E9E9E;font-size: 12px;">' . $user_data['company_name'] . '</span>
 	</td>
@@ -134,8 +134,8 @@ if (isset($_GET['data'])) {
 	<span style="color: #9E9E9E;">Phone: </span>' . $data['mobile'] . '
 	</td>
 	<td style="width: 200px;">
-	<span style="color: #9E9E9E;">Invoice Number: </span>' . $data['id'] . '<br/>
-	<span style="color: #9E9E9E;">Invoice Date: </span>' . $data['date'] . '<br/>
+	<span style="color: #9E9E9E;">Estimate Number: </span>' . $data['id'] . '<br/>
+	<span style="color: #9E9E9E;">Estimate Date: </span>' . $data['date'] . '<br/>
 	<span style="color: #9E9E9E;">Payment Due: </span>' . $data['due_date'] . '
 	</td>
 	</tr>
@@ -155,14 +155,14 @@ if (isset($_GET['data'])) {
 	</thead>
 	<tbody>';
 
-	$invoice_items_rs = Database::search("SELECT * FROM invoice_item WHERE invoice_id = '$id'");
-	$invoice_items_num = $invoice_items_rs->num_rows;
+	$estimate_items_rs = Database::search("SELECT * FROM estimate_item WHERE estimate_id = '$id'");
+	$estimate_items_num = $estimate_items_rs->num_rows;
 
-	// Check if there are any invoice items
-	if ($invoice_items_num > 0) {
-		// Loop through each invoice item
-		for ($i = 0; $i < $invoice_items_num; $i++) {
-			$row = $invoice_items_rs->fetch_assoc();
+	// Check if there are any estimate items
+	if ($estimate_items_num > 0) {
+		// Loop through each estimate item
+		for ($i = 0; $i < $estimate_items_num; $i++) {
+			$row = $estimate_items_rs->fetch_assoc();
 			// Extract item details
 			$itemName = $row['name'];
 			$itemDescription = $row['description'];
@@ -171,7 +171,7 @@ if (isset($_GET['data'])) {
 			$totalPrice = $qty * $price;
 
 			 // Determine if this is the last item
-			 $borderStyle = ($i === $invoice_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
+			 $borderStyle = ($i === $estimate_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
 
 			// Add HTML code for this item to the $html string
 			$html .= '<tr>';
@@ -185,7 +185,7 @@ if (isset($_GET['data'])) {
 			$html .= '</tr>';
 		}
 	} else {
-		// No invoice items found
+		// No estimate items found
 		$html .= '<tr><td colspan="4">No items found</td></tr>';
 	}
 
@@ -254,12 +254,11 @@ $footerText = $data['footer'] ;
 	$pdf->AddPage();
 	// Print text using writeHTMLCell()
 	$pdf->writeHTMLCell(0, 0, '', '', $html, 0, 0, 0, true, '', true);
-	//$pdf->Output(dirname(__FILE__).'example_001.pdf', 'F');
 
 	// ---------------------------------------------------------
 
 	// Generate a unique PDF filename
-	$pdfFilename = 'Invoice_#' . $data['id'] . '.pdf';
+	$pdfFilename = 'Estimate_#' . $data['id'] . '.pdf';
 
 	// Output the PDF document
 	$pdf->Output($pdfFilename, 'I');

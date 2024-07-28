@@ -33,11 +33,11 @@ switch ($method) {
 
                 switch ($action) {
                     case 'send':
-                        $response = handleSendInvoice($data, $email);
+                        $response = handleSendEstimate($data, $email);
                         break;
 
                     case 'save':
-                        $response = handleSaveInvoice($data, $email);
+                        $response = handleSaveEstimate($data, $email);
                         break;
 
                     default:
@@ -53,7 +53,6 @@ switch ($method) {
         }
 
         echo json_encode($response);
-
         break;
 
     case 'GET':
@@ -66,32 +65,33 @@ switch ($method) {
                     $id = $_GET['id'];
                     $email = $_GET['email'];
 
-                    // Select data from the invoice table based on id and email
-                    $sql = "SELECT * FROM invoice WHERE id = '$id'";
+                    // Select data from the estimate table based on id and email
+                    $sql = "SELECT * FROM estimate WHERE id = '$id'";
                     $result = Database::search($sql); // Assuming Database::search executes the SQL query
 
                     // Fetch data and format as an associative array
-                    $invoice = [];
+                    $estimate = [];
                     $row = $result->fetch_assoc();
                     if ($row) {
-                        $invoice = [
+                        $estimate = [
                             'customerId' => intval($row['customer_id']),
                             'footerNotes' => $row['footer'],
-                            'invoiceNumber' => intval($row['invoice_id']),
+                            'estimateNumber' => intval($row['estimate_id']),
                             'notes' => $row['notes'],
                             'paidAmount' => intval($row['paid_amount']),
                             'selectedDate' => $row['date'],
                             'paymentInstructions' => $row['instruction'],
                             'selectedDueDate' => $row['due_date'],
-                            'summary' => $row['summary'],
+                            'estimateName' => $row['name'],
+                            'subhead' => $row['subhead'],
                             'productTable' => [] // Initialize productTable array
                         ];
 
                         // Initialize an auto-incrementing id variable
                         $autoIncrementId = 1;
 
-                        // Fetch invoice items
-                        $ii_sql = "SELECT * FROM invoice_item WHERE invoice_id = '$id'";
+                        // Fetch estimate items
+                        $ii_sql = "SELECT * FROM estimate_item WHERE estimate_id = '$id'";
                         $ii_result = Database::search($ii_sql); // Assuming Database::search executes the SQL query
 
                         while ($ii_row = $ii_result->fetch_assoc()) {
@@ -105,7 +105,7 @@ switch ($method) {
                             $totalAmount += $totalProductPrice + $totalProductTax;
 
                             // Format each row as an associative array
-                            $invoice_item = [
+                            $estimate_item = [
                                 'id' => $autoIncrementId++, // Auto-incrementing id
                                 'name' => $ii_row['name'],
                                 'description' => $ii_row['description'],
@@ -116,45 +116,45 @@ switch ($method) {
                                 'amount' => $totalAmount
                             ];
 
-                            // Add the formatted invoice item to the productTable array
-                            $invoice['productTable'][] = $invoice_item;
+                            // Add the formatted estimate item to the productTable array
+                            $estimate['productTable'][] = $estimate_item;
                         }
                     }
 
                     // Prepare the final response
-                    $response = ['status' => 1, 'message' => 'Invoice found successfully.', 'invoice' => $invoice];
+                    $response = ['status' => 1, 'message' => 'Estimate found successfully.', 'estimate' => $estimate];
 
                 } else {
                     // Handle the case where only 'email' is provided
-                    $invoice_rs = Database::search("SELECT invoice.id AS id, TRIM(customer.name) AS name, date, due_date FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE customer.user_email = '$email'");
-                    $invoice_num = $invoice_rs->num_rows;
+                    $estimate_rs = Database::search("SELECT estimate.id AS id, TRIM(customer.name) AS name, date, due_date FROM estimate INNER JOIN customer ON estimate.customer_id = customer.id WHERE customer.user_email = '$email'");
+                    $estimate_num = $estimate_rs->num_rows;
 
-                    if ($invoice_num > 0) {
-                        $invoice_data = array();
-                        while ($row = $invoice_rs->fetch_assoc()) {
+                    if ($estimate_num > 0) {
+                        $estimate_data = array();
+                        while ($row = $estimate_rs->fetch_assoc()) {
                             // Convert id to integer
                             $row['id'] = intval($row['id']);
 
-                            // Fetch invoice items for the current invoice
-                            $invoiceId = $row['id'];
-                            $invoiceItems_rs = Database::search("SELECT * FROM invoice_item WHERE invoice_id = $invoiceId");
+                            // Fetch estimate items for the current estimate
+                            $estimateId = $row['id'];
+                            $estimateItems_rs = Database::search("SELECT * FROM estimate_item WHERE estimate_id = $estimateId");
                             $totalAmount = 0;
 
-                            while ($itemRow = $invoiceItems_rs->fetch_assoc()) {
+                            while ($itemRow = $estimateItems_rs->fetch_assoc()) {
                                 // Calculate total amount for each item and add to totalAmount
                                 $totalAmount += ($itemRow['qty'] * $itemRow['selling_price']);
                             }
 
                             // Calculate due amount
-                            $invoice_rs = Database::search("SELECT invoice.id AS id, invoice_id, customer.name AS name, date, due_date, paid_amount FROM invoice INNER JOIN customer ON invoice.customer_id = customer.id WHERE customer.user_email = '$email'");
-                            $invoice_num = $invoice_rs->num_rows;
+                            $estimate_rs = Database::search("SELECT estimate.id AS id, estimate_id, customer.name AS name, date, due_date, paid_amount FROM estimate INNER JOIN customer ON estimate.customer_id = customer.id WHERE customer.user_email = '$email'");
+                            $estimate_num = $estimate_rs->num_rows;
 
-                            if ($invoice_num > 0) {
-                                $invoice_data = array();
-                                while ($row = $invoice_rs->fetch_assoc()) {
+                            if ($estimate_num > 0) {
+                                $estimate_data = array();
+                                while ($row = $estimate_rs->fetch_assoc()) {
 
                                     // Convert id to integer
-                                    $row['invoice_id'] = intval($row['invoice_id']);
+                                    $row['estimate_id'] = intval($row['estimate_id']);
 
                                     // Trim spaces from the name field
                                     $row['name'] = trim($row['name']);
@@ -171,12 +171,12 @@ switch ($method) {
                                         $row['name'] = implode(" ", $nameParts);
                                     }
 
-                                    // Fetch invoice items for the current invoice
-                                    $invoiceId = $row['id'];
-                                    $invoiceItems_rs = Database::search("SELECT * FROM invoice_item WHERE invoice_id = $invoiceId");
+                                    // Fetch estimate items for the current estimate
+                                    $estimateId = $row['id'];
+                                    $estimateItems_rs = Database::search("SELECT * FROM estimate_item WHERE estimate_id = $estimateId");
                                     $totalAmount = 0;
 
-                                    while ($itemRow = $invoiceItems_rs->fetch_assoc()) {
+                                    while ($itemRow = $estimateItems_rs->fetch_assoc()) {
                                         // Calculate total amount for each item including tax and add to totalAmount
                                         $itemTotal = $itemRow['qty'] * $itemRow['selling_price'];
                                         $taxAmount = ($itemTotal * $itemRow['tax']) / 100;
@@ -193,21 +193,21 @@ switch ($method) {
                                     // Remove paid_amount from the row
                                     unset($row['paid_amount']);
 
-                                    // Add row to invoice_data array
-                                    $invoice_data[] = $row;
+                                    // Add row to estimate_data array
+                                    $estimate_data[] = $row;
                                 }
 
-                                $response = ['status' => 1, 'message' => 'Record found successfully.', 'invoice' => $invoice_data];
+                                $response = ['status' => 1, 'message' => 'Record found successfully.', 'estimate' => $estimate_data];
 
                             } else {
-                                $response = ['status' => 0, 'message' => 'Can\'t Find Any Invoices!'];
+                                $response = ['status' => 0, 'message' => 'Can\'t Find Any Estimates!'];
                             }
                         }
 
-                        $response = ['status' => 1, 'message' => 'Record found successfully.', 'invoice' => $invoice_data];
+                        $response = ['status' => 1, 'message' => 'Record found successfully.', 'estimate' => $estimate_data];
 
                     } else {
-                        $response = ['status' => 0, 'message' => 'Can\'t Find Any Invoices!'];
+                        $response = ['status' => 0, 'message' => 'Can\'t Find Any Estimates!'];
                     }
                 }
             } else {
@@ -238,11 +238,11 @@ switch ($method) {
 
                 switch ($action) {
                     case 'send':
-                        $response = handleSendUInvoice($data, $email, $id);
+                        $response = handleSendUEstimate($data, $email, $id);
                         break;
 
                     case 'save':
-                        $response = handleUpdateInvoice($data, $email, $id);
+                        $response = handleUpdateEstimate($data, $email, $id);
                         break;
 
                     default:
@@ -267,25 +267,25 @@ switch ($method) {
         // Check if the email parameter is provided
         if ($email !== null) {
             if (isset($_GET['id']) && isset($email)) {
-                // Add DELETE request handling for deleting an invoice and its items
-                $invoiceId = $_GET['id'] ?? null;
+                // Add DELETE request handling for deleting an estimate and its items
+                $estimateId = $_GET['id'] ?? null;
 
-                // Delete all invoice items associated with the invoice
-                $sql_delete_invoice_items = "DELETE FROM invoice_item WHERE invoice_id = '$invoiceId'";
-                $status_delete_invoice_items = Database::iud($sql_delete_invoice_items);
+                // Delete all estimate items associated with the estimate
+                $sql_delete_estimate_items = "DELETE FROM estimate_item WHERE estimate_id = '$estimateId'";
+                $status_delete_estimate_items = Database::iud($sql_delete_estimate_items);
 
-                if ($status_delete_invoice_items) {
-                    // Delete the invoice itself
-                    $sql_delete_invoice = "DELETE FROM invoice WHERE id = '$invoiceId'";
-                    $status_delete_invoice = Database::iud($sql_delete_invoice);
+                if ($status_delete_estimate_items) {
+                    // Delete the estimate itself
+                    $sql_delete_estimate = "DELETE FROM estimate WHERE id = '$estimateId'";
+                    $status_delete_estimate = Database::iud($sql_delete_estimate);
 
-                    if ($status_delete_invoice) {
-                        $response = ['status' => 1, 'message' => 'Invoice deleted successfully.'];
+                    if ($status_delete_estimate) {
+                        $response = ['status' => 1, 'message' => 'Estimate deleted successfully.'];
                     } else {
-                        $response = ['status' => 0, 'message' => 'Failed to delete the invoice.'];
+                        $response = ['status' => 0, 'message' => 'Failed to delete the estimate.'];
                     }
                 } else {
-                    $response = ['status' => 0, 'message' => 'Failed to delete invoice items.'];
+                    $response = ['status' => 0, 'message' => 'Failed to delete estimate items.'];
                 }
             } else {
                 $response = ['status' => 0, 'message' => 'Invalid id or email provided.'];
@@ -298,15 +298,19 @@ switch ($method) {
         break;
 }
 
-function handleSendInvoice($data, $email){
+
+function handleSendEstimate($data, $email)
+{
+
     $response = [];
 
     if ($data) {
         $customerId = $data['customerId'];
-        $invoiceNumber = $data['invoiceNumber'];
+        $estimateNumber = $data['estimateNumber'];
         $selectedDate = $data['selectedDate'];
         $selectedDueDate = $data['selectedDueDate'];
-        $summary = $data['summary'];
+        $estimateName = $data['estimateName'];
+        $subhead = $data['subhead'];
         $notes = $data['notes'];
         $footerNotes = $data['footerNotes'];
         $paidAmount = $data['paidAmount'];
@@ -393,7 +397,7 @@ function handleSendInvoice($data, $email){
 <table style="padding: 5px 15px 10px 15px;">
 <tbody>
 <tr>
-<td style="width: 546px;"><span style="font-size: 22px;">' . explode(" ", $user_data['company_name'])[0] . ' INVOICE</span><br/><span style="color: #9E9E9E;font-size: 18px;">' . $user_data['company_name'] . '</span>
+<td style="width: 546px;"><span style="font-size: 22px;">' . explode(" ", $user_data['company_name'])[0] . ' ESTIMATE</span><br/><span style="color: #9E9E9E;font-size: 18px;">' . $user_data['company_name'] . '</span>
 </td>
 <td align="right" style="width: 190px;" ><span style="font-size: 17px;">Amount Due (LKR)</span><br/><span style="font-size: 25px; font-weight: bold;">' . number_format($dueAmount, 2) . '</span>
 </td>
@@ -412,8 +416,8 @@ function handleSendInvoice($data, $email){
 <span style="color: #9E9E9E;">Phone: </span>' . $data['mobile'] . '
 </td>
 <td  style="width: 190px;">
-<span style="color: #9E9E9E;">Invoice Number: </span>' . $invoiceNumber . '<br/>
-<span style="color: #9E9E9E;">Invoice Date: </span>' . $selectedDate . '<br/>
+<span style="color: #9E9E9E;">Estimate Number: </span>' . $estimateNumber . '<br/>
+<span style="color: #9E9E9E;">Estimate Date: </span>' . $selectedDate . '<br/>
 <span style="color: #9E9E9E;">Payment Due: </span>' . $selectedDueDate . '
 </td>
 </tr>
@@ -432,20 +436,20 @@ function handleSendInvoice($data, $email){
 </thead>
 <tbody>';
 
-        // Insert into invoice table
-        $sql_invoice = "INSERT INTO invoice (customer_id, invoice_id, date, due_date, summary, notes, footer, paid_amount, instruction, user_email) VALUES ('$customerId', '$invoiceNumber', '$selectedDate', '$selectedDueDate', '$summary', '".$notes."', '".$footerNotes."', '$paidAmount', '".$paymentInstructions."','$email')";
-        $status_invoice = Database::iud($sql_invoice);
+        // Insert into estimate table
+        $sql_estimate = "INSERT INTO estimate (customer_id, estimate_id, date, due_date, name, subhead, notes, footer, paid_amount, instruction, user_email) VALUES ('$customerId', '$estimateNumber', '$selectedDate', '$selectedDueDate', '$estimateName', '$subhead', '".$notes."', '".$footerNotes."', '$paidAmount', '".$paymentInstructions."','$email')";
+        $status_estimate = Database::iud($sql_estimate);
 
-        if ($status_invoice) {
-            // Get the last inserted invoice ID
-            $invoice_id = Database::getLastInsertedId();
+        if ($status_estimate) {
+            // Get the last inserted estimate ID
+            $estimate_id = Database::getLastInsertedId();
 
             $taxTotal = 0;
             $subTotal = 0;
 
             $i = 0; // Initialize the counter
-            $invoice_items_num = count($productTable); // Get the number of items
-            // Insert into invoice_item table
+            $estimate_items_num = count($productTable); // Get the number of items
+            // Insert into estimate_item table
             foreach ($productTable as $product) {
                 $name = $product['name'];
                 $description = $product['description'];
@@ -464,11 +468,11 @@ function handleSendInvoice($data, $email){
                 // Add total price (to grand total
                 $subTotal += $totalPrice;
 
-                $sql_invoice_item = "INSERT INTO invoice_item (invoice_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$invoice_id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
-                $status_invoice_item = Database::iud($sql_invoice_item);
+                $sql_estimate_item = "INSERT INTO estimate_item (estimate_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$estimate_id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
+                $status_estimate_item = Database::iud($sql_estimate_item);
 
                 // Determine if this is the last item
-                $borderStyle = ($i === $invoice_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
+                $borderStyle = ($i === $estimate_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
 
                 $html .= '<tr>';
                 $html .= '<td style="' . $borderStyle . ' width: 350px;">';
@@ -480,8 +484,8 @@ function handleSendInvoice($data, $email){
                 $html .= '<td style="' . $borderStyle . ' text-align: right; width: 173px; color: #2d3436;">LKR ' . number_format($totalPrice, 2) . '</td>';
                 $html .= '</tr>';
 
-                if (!$status_invoice_item) {
-                    $response = ['status' => 0, 'message' => 'Failed to create invoice item record.'];
+                if (!$status_estimate_item) {
+                    $response = ['status' => 0, 'message' => 'Failed to create estimate item record.'];
                     echo json_encode($response);
                     exit;
                 }
@@ -490,7 +494,7 @@ function handleSendInvoice($data, $email){
             }
 
         } else {
-            // No invoice items found
+            // No estimate items found
             $html .= '<tr><td colspan="4">No items found</td></tr>';
         }
 
@@ -576,7 +580,7 @@ function handleSendInvoice($data, $email){
         // ---------------------------------------------------------
 
         // Generate a unique PDF filename
-        $pdfFilename = 'Invoice_#' . $invoiceNumber . '.pdf';
+        $pdfFilename = 'Estimate_#' . $estimateNumber . '.pdf';
 
         if (filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
 
@@ -599,12 +603,12 @@ function handleSendInvoice($data, $email){
             $mail->addReplyTo('sender emai', ''); // sender email  sender
             $mail->addAddress($data['email']);
             $mail->isHTML(true);
-            $mail->Subject = 'Invoice_#' . $invoiceNumber;
+            $mail->Subject = 'Estimate_#' . $estimateNumber;
             $bodyContent = '<div style="width: 100%; background-color: #F6F6F6; padding: 30px 0 50px 0;">
     <div
         style="width: 600px; background-color: #fff; margin: auto; padding: 20px; text-align: center; border: 1px solid #E9E9E9; text-align: left;">
         <div>Hi,</div>
-        <div style="margin-top: 10px;">Please see the attached Invoice_#' . $invoiceNumber . ' The due amount is LKR ' . number_format($dueAmount, 2) . ' The invoice
+        <div style="margin-top: 10px;">Please see the attached Estimate_#' . $estimateNumber . ' The due amount is LKR ' . number_format($dueAmount, 2) . ' The estimate
             is due by ' . $selectedDate . '. Please
             don\'t hesitate to get in touch if you have any questions or need clarifications.</div>
         <div style="margin-top: 10px;">Best regards,</div>
@@ -613,14 +617,15 @@ function handleSendInvoice($data, $email){
             $mail->Body = $bodyContent;
 
             // Attach the PDF
-            $mail->addStringAttachment($pdfContent, 'Invoice_#' . $invoiceNumber . '.pdf');
- 
+            $mail->addStringAttachment($pdfContent, 'Estimate_#' . $estimateNumber . '.pdf');
+
         } else {
             $response = ['status' => 0, 'message' => 'Invalid email address provided.'];
         }
 
-        $response = ['status' => 1, 'message' => 'Invoice created successfully.', 'invoice_id' => $invoice_id];
+        $response = ['status' => 1, 'message' => 'Estimate updated successfully.', 'estimate_id' => $estimate_id];
 
+        
         if (!$mail->send()) {
             $response = ['status' => 0, 'message' => 'Email sending failed: ' . $mail->ErrorInfo];
         }
@@ -632,15 +637,17 @@ function handleSendInvoice($data, $email){
     return $response;
 }
 
-function handleSaveInvoice($data, $email){
+function handleSaveEstimate($data, $email)
+{
     $response = [];
 
     if ($data) {
         $customerId = $data['customerId'];
-        $invoiceNumber = $data['invoiceNumber'];
+        $estimateNumber = $data['estimateNumber'];
         $selectedDate = $data['selectedDate'];
         $selectedDueDate = $data['selectedDueDate'];
-        $summary = $data['summary'];
+        $estimateName = $data['estimateName'];
+        $subhead = $data['subhead'];
         $notes = $data['notes'];
         $footerNotes = $data['footerNotes'];
         $paidAmount = $data['paidAmount'];
@@ -665,14 +672,16 @@ function handleSaveInvoice($data, $email){
             $paidAmount = 0;
         }
 
-        // Insert into invoice table
-        $sql_invoice = "INSERT INTO invoice (customer_id, invoice_id, date, due_date, summary, notes, footer, paid_amount, instruction, user_email) VALUES ('$customerId', '$invoiceNumber', '$selectedDate', '$selectedDueDate', '$summary', '".$notes."', '".$footerNotes."', '$paidAmount', '".$paymentInstructions."','$email')";
-        $status_invoice = Database::iud($sql_invoice);
 
-        if ($status_invoice) {
-            // Get the last inserted invoice ID
-            $invoice_id = Database::getLastInsertedId();
-            
+        // Insert into estimate table
+        $sql_estimate = "INSERT INTO estimate (customer_id, estimate_id, date, due_date, name, subhead, notes, footer, paid_amount, instruction, user_email) VALUES ('$customerId', '$estimateNumber', '$selectedDate', '$selectedDueDate', '$estimateName', '$subhead', '".$notes."', '".$footerNotes."', '$paidAmount', '".$paymentInstructions."','$email')";
+        $status_estimate = Database::iud($sql_estimate);
+
+        if ($status_estimate) {
+            // Get the last inserted estimate ID
+            $estimate_id = Database::getLastInsertedId();
+
+            // Insert into estimate_item table
             foreach ($productTable as $product) {
                 $name = $product['name'];
                 $description = $product['description'];
@@ -681,38 +690,42 @@ function handleSaveInvoice($data, $email){
                 $price = is_numeric($product['price']) ? $product['price'] : 0;
                 $tax = is_numeric($product['tax']) ? $product['tax'] : 0;
 
-                $sql_invoice_item = "INSERT INTO invoice_item (invoice_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$invoice_id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
-                $status_invoice_item = Database::iud($sql_invoice_item);
 
-                if (!$status_invoice_item) {
+                $sql_estimate_item = "INSERT INTO estimate_item (estimate_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$estimate_id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
+                $status_estimate_item = Database::iud($sql_estimate_item);
+
+                if (!$status_estimate_item) {
                     $response = ['status' => 0, 'message' => 'Failed to create invoice item record.'];
                     echo json_encode($response);
                     exit;
                 }
-               
+
+
             }
 
         }
 
-        $response = ['status' => 1, 'message' => 'Invoice created successfully.', 'invoice_id' => $invoice_id];
+        $response = ['status' => 1, 'message' => 'Estimate updated successfully.', 'estimate_id' => $estimate_id];
 
     } else {
         $response = ['status' => 0, 'message' => 'Invalid input.'];
     }
 
     return $response;
-
 }
 
-function handleSendUInvoice($data, $email, $id){
+
+function handleSendUEstimate($data, $email, $id){
+
     $response = [];
 
     if ($data) {
         $customerId = $data['customerId'];
-        $invoiceNumber = $data['invoiceNumber'];
+        $estimateNumber = $data['estimateNumber'];
         $selectedDate = $data['selectedDate'];
         $selectedDueDate = $data['selectedDueDate'];
-        $summary = $data['summary'];
+        $estimateName = $data['estimateName'];
+        $subhead = $data['subhead'];
         $notes = $data['notes'];
         $footerNotes = $data['footerNotes'];
         $paidAmount = $data['paidAmount'];
@@ -756,9 +769,9 @@ function handleSendUInvoice($data, $email, $id){
             $dueAmount = 0;
         }
 
-        // Update invoice table
-        $sql_invoice = "UPDATE invoice SET customer_id = '$customerId', invoice_id = '$invoiceNumber', date = '$selectedDate', due_date = '$selectedDueDate', summary = '$summary', notes = '".$notes."', footer = '".$footerNotes."', paid_amount = '$paidAmount', instruction = '".$paymentInstructions."' WHERE id = '$id'";
-        $status_invoice = Database::iud($sql_invoice);
+        // Update estimate table
+        $sql_estimate = "UPDATE estimate SET customer_id = '$customerId', estimate_id = '$estimateNumber', date = '$selectedDate', due_date = '$selectedDueDate', name = '$estimateName',subhead = '$subhead', notes = '".$notes."', footer = '".$footerNotes."', paid_amount = '$paidAmount', instruction = '".$paymentInstructions."' WHERE id = '$id'";
+        $status_estimate = Database::iud($sql_estimate);
 
         $data_rs = Database::search("SELECT * FROM customer WHERE id = $customerId");
         $data = $data_rs->fetch_assoc();
@@ -801,7 +814,7 @@ function handleSendUInvoice($data, $email, $id){
 <tbody>
 <tr>
 <td style="width: 546px;">
-<span style="font-size: 22px;">' . explode(" ", $user_data['company_name'])[0] . ' INVOICE</span>
+<span style="font-size: 22px;">' . explode(" ", $user_data['company_name'])[0] . ' ESTIMATE</span>
 <br/>
 <span style="color: #9E9E9E;font-size: 18px;">' . $user_data['company_name'] . '</span>
 </td>
@@ -823,8 +836,8 @@ function handleSendUInvoice($data, $email, $id){
 <span style="color: #9E9E9E;">Phone: </span>' . $data['mobile'] . '
 </td>
 <td  style="width: 190px;">
-<span style="color: #9E9E9E;">Invoice Number: </span>' . $id . '<br/>
-<span style="color: #9E9E9E;">Invoice Date: </span>' . $selectedDate . '<br/>
+<span style="color: #9E9E9E;">Estimate Number: </span>' . $id . '<br/>
+<span style="color: #9E9E9E;">Estimate Date: </span>' . $selectedDate . '<br/>
 <span style="color: #9E9E9E;">Payment Due: </span>' . $selectedDueDate . '
 </td>
 </tr>
@@ -843,13 +856,13 @@ function handleSendUInvoice($data, $email, $id){
 </thead>
 <tbody>';
 
-        if ($status_invoice) {
-            // Delete existing invoice items
-            $sql_delete_items = "DELETE FROM invoice_item WHERE invoice_id = '$id'";
+        if ($status_estimate) {
+            // Delete existing estimate items
+            $sql_delete_items = "DELETE FROM estimate_item WHERE estimate_id = '$id'";
             $status_delete_items = Database::iud($sql_delete_items);
 
             if (!$status_delete_items) {
-                $response = ['status' => 0, 'message' => 'Failed to delete existing invoice items.'];
+                $response = ['status' => 0, 'message' => 'Failed to delete existing estimate items.'];
                 echo json_encode($response);
                 exit;
             }
@@ -858,8 +871,8 @@ function handleSendUInvoice($data, $email, $id){
             $subTotal = 0;
 
             $i = 0; // Initialize the counter
-            $invoice_items_num = count($productTable); // Get the number of items
-            // Insert new invoice items
+            $estimate_items_num = count($productTable); // Get the number of items
+            // Insert new estimate items
             foreach ($productTable as $product) {
                 $name = $product['name'];
                 $description = $product['description'];
@@ -878,11 +891,11 @@ function handleSendUInvoice($data, $email, $id){
                 // Add total price (to grand total
                 $subTotal += $totalPrice;
 
-                $sql_invoice_item = "INSERT INTO invoice_item (invoice_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
-                $status_invoice_item = Database::iud($sql_invoice_item);
+                $sql_estimate_item = "INSERT INTO estimate_item (estimate_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
+                $status_estimate_item = Database::iud($sql_estimate_item);
 
                 // Determine if this is the last item
-                $borderStyle = ($i === $invoice_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
+                $borderStyle = ($i === $estimate_items_num - 1) ? '' : 'border-bottom: 1px solid #dfe6e9;';
 
                 $html .= '<tr>';
                 $html .= '<td style="' . $borderStyle . ' width: 350px;">';
@@ -894,8 +907,8 @@ function handleSendUInvoice($data, $email, $id){
                 $html .= '<td style="' . $borderStyle . ' text-align: right; width: 173px; color: #2d3436;">LKR ' . number_format($totalPrice, 2) . '</td>';
                 $html .= '</tr>';
 
-                if (!$status_invoice_item) {
-                    $response = ['status' => 0, 'message' => 'Failed to create invoice item record.'];
+                if (!$status_estimate_item) {
+                    $response = ['status' => 0, 'message' => 'Failed to create estimate item record.'];
                     echo json_encode($response);
                     exit;
                 }
@@ -905,7 +918,7 @@ function handleSendUInvoice($data, $email, $id){
 
 
         } else {
-            // No invoice items found
+            // No estimate items found
             $html .= '<tr><td colspan="4">No items found</td></tr>';
         }
 
@@ -978,7 +991,7 @@ function handleSendUInvoice($data, $email, $id){
         // ---------------------------------------------------------
 
         // Generate a unique PDF filename
-        $pdfFilename = 'Invoice_#' . $invoiceNumber . '.pdf';
+        $pdfFilename = 'Estimate_#' . $estimateNumber . '.pdf';
 
         if (filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
 
@@ -1001,12 +1014,12 @@ function handleSendUInvoice($data, $email, $id){
             $mail->addReplyTo('sender emai', ''); // sender email  sender
             $mail->addAddress($data['email']);
             $mail->isHTML(true);
-            $mail->Subject = 'Invoice_#' . $invoiceNumber;
+            $mail->Subject = 'Estimate_#' . $estimateNumber;
             $bodyContent = '<div style="width: 100%; background-color: #F6F6F6; padding: 30px 0 50px 0;">
     <div
         style="width: 600px; background-color: #fff; margin: auto; padding: 20px; text-align: center; border: 1px solid #E9E9E9; text-align: left;">
         <div>Hi,</div>
-        <div style="margin-top: 10px;">Please see the attached Invoice_#' . $invoiceNumber . ' The due amount is LKR ' . number_format($dueAmount, 2) . ' The invoice
+        <div style="margin-top: 10px;">Please see the attached Estimate_#' . $estimateNumber . ' The due amount is LKR ' . number_format($dueAmount, 2) . ' The estimate
             is due by ' . $selectedDate . '. Please
             don\'t hesitate to get in touch if you have any questions or need clarifications.</div>
         <div style="margin-top: 10px;">Best regards,</div>
@@ -1015,13 +1028,13 @@ function handleSendUInvoice($data, $email, $id){
             $mail->Body = $bodyContent;
 
             // Attach the PDF
-            $mail->addStringAttachment($pdfContent, 'Invoice_#' . $invoiceNumber . '.pdf');
+            $mail->addStringAttachment($pdfContent, 'Estimate_#' . $estimateNumber . '.pdf');
 
         } else {
             $response = ['status' => 0, 'message' => 'Invalid email address provided.'];
         }
 
-        $response = ['status' => 1, 'message' => 'Invoice updated successfully.'];
+        $response = ['status' => 1, 'message' => 'Estimate updated successfully.'];
 
         if (!$mail->send()) {
             $response = ['status' => 0, 'message' => 'Email sending failed: ' . $mail->ErrorInfo];
@@ -1034,15 +1047,17 @@ function handleSendUInvoice($data, $email, $id){
     return $response;
 }
 
-function handleUpdateInvoice($data, $email, $id){
+
+function handleUpdateEstimate($data, $email, $id){
     $response = [];
 
     if ($data) {
         $customerId = $data['customerId'];
-        $invoiceNumber = $data['invoiceNumber'];
+        $estimateNumber = $data['estimateNumber'];
         $selectedDate = $data['selectedDate'];
         $selectedDueDate = $data['selectedDueDate'];
-        $summary = $data['summary'];
+        $estimateName = $data['estimateName'];
+        $subhead = $data['subhead'];
         $notes = $data['notes'];
         $footerNotes = $data['footerNotes'];
         $paidAmount = $data['paidAmount'];
@@ -1067,24 +1082,23 @@ function handleUpdateInvoice($data, $email, $id){
             $paidAmount = 0;
         }
 
-        
-        // Update invoice table
-        $sql_invoice = "UPDATE invoice SET customer_id = '$customerId', invoice_id = '$invoiceNumber', date = '$selectedDate', due_date = '$selectedDueDate', summary = '$summary', notes = '".$notes."', footer = '".$footerNotes."', paid_amount = '$paidAmount', instruction = '".$paymentInstructions."' WHERE id = '$id'";
+        // Update estimate table
+        $sql_estimate = "UPDATE estimate SET customer_id = '$customerId', estimate_id = '$estimateNumber', date = '$selectedDate', due_date = '$selectedDueDate', name = '$estimateName', subhead = '$subhead', notes = '".$notes."', footer = '".$footerNotes."', paid_amount = '$paidAmount', instruction = '".$paymentInstructions."' WHERE id = '$id' ";
 
-        $status_invoice = Database::iud($sql_invoice);
+        $status_estimate = Database::iud($sql_estimate);
 
-
-        if ($status_invoice) {
-            // Delete existing invoice items
-            $sql_delete_items = "DELETE FROM invoice_item WHERE invoice_id = '$id'";
+        if ($status_estimate) {
+            // Delete existing estimate items
+            $sql_delete_items = "DELETE FROM estimate_item WHERE estimate_id = '$id'";
             $status_delete_items = Database::iud($sql_delete_items);
 
             if (!$status_delete_items) {
-                $response = ['status' => 0, 'message' => 'Failed to delete existing invoice items.'];
+                $response = ['status' => 0, 'message' => 'Failed to delete existing estimate items.'];
                 echo json_encode($response);
                 exit;
             }
 
+            // Insert new estimate items
             foreach ($productTable as $product) {
                 $name = $product['name'];
                 $description = $product['description'];
@@ -1092,24 +1106,21 @@ function handleUpdateInvoice($data, $email, $id){
                 $buying_price = is_numeric($product['buying_price']) && $product['buying_price'] > 0 ? $product['buying_price'] : 0;
                 $price = is_numeric($product['price']) ? $product['price'] : 0;
                 $tax = is_numeric($product['tax']) ? $product['tax'] : 0;
-                
+               
+                $sql_estimate_item = "INSERT INTO estimate_item (estimate_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
+                $status_estimate_item = Database::iud($sql_estimate_item);
 
-                $sql_invoice_item = "INSERT INTO invoice_item (invoice_id, name, description, qty, selling_price, buying_price, tax) VALUES ('$id', '$name', '$description', '$qty', '$price', '$buying_price', '$tax')";
-
-                $status_invoice_item = Database::iud($sql_invoice_item);
-
-              
-                if (!$status_invoice_item) {
-                    $response = ['status' => 0, 'message' => 'Failed to create invoice item record.'];
+                if (!$status_estimate_item) {
+                    $response = ['status' => 0, 'message' => 'Failed to create estimate item record.'];
                     echo json_encode($response);
                     exit;
                 }
 
             }
 
-        } 
-
-        $response = ['status' => 1, 'message' => 'Invoice updated successfully.', 'invoice_id' => $id];
+        }
+        
+        $response = ['status' => 1, 'message' => 'Estimate updated successfully.', 'estimate_id' => $id];
 
     } else {
         $response = ['status' => 0, 'message' => 'Invalid input.'];

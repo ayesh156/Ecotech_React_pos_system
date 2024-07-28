@@ -1,24 +1,23 @@
-import { Box, useTheme, Button, IconButton, Tooltip  } from "@mui/material";
+import { Box, useTheme, Button, IconButton } from "@mui/material";
 import { useState, useEffect, useCallback } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import ClearIcon from "@mui/icons-material/Clear";
-import EditIcon from "@mui/icons-material/Edit";
-import FeedIcon from '@mui/icons-material/Feed';
 import Loader from "../../components/Loader";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BASE_URL, U_EMAIL } from "../../config";
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import PositionedMenu from "../../components/PositionedMenu"; // Adjust the import path accordingly
 
 const Invoices = () => {
+  const navigate = useNavigate();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   // State for selected date range and filtered data
@@ -86,6 +85,11 @@ const Invoices = () => {
       headerName: "Customer",
       flex: 1,
       cellClassName: "name-column--cell",
+      renderCell: (params) => (
+        <Button onClick={() => editInvoice(params.row.id)} className="name-column--cell" style={{textTransform:"capitalize"}}>
+          {params.value}
+        </Button>
+      )
     },
     {
       field: "date",
@@ -110,40 +114,19 @@ const Invoices = () => {
       flex: 1,
     },
     {
-      field: "copy",
-      headerName: "Copy",
-      flex: 0.3,
-      renderCell: (params) => (
-        <Tooltip title="Copy to Clipboard">
-          <IconButton onClick={() => handleCopyLink(params.row.invoice_id)}>
-            <ContentCopyIcon style={{ color: colors.blueAccent[500] }} />
-          </IconButton>
-        </Tooltip>
-      ),
-    },
-    {
-      field: "view",
-      headerName: "View",
-      flex: 0.3,
-      renderCell: (params) => (
-        <Link onClick={() => viewInvoice(params.row.id)}>
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <FeedIcon style={{ color: colors.blueAccent[500] }} />
-          </Box>
-        </Link>
-      ),
-    },
-    {
-      field: "edit",
-      headerName: "Edit",
-      flex: 0.3,
-      renderCell: (params) => (
-        <Link to={`${params.row.id}/edit`}>
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <EditIcon style={{ color: colors.blueAccent[500] }} />
-          </Box>
-        </Link>
-      ),
+      field: "actions",
+      headerName: "Actions",
+      flex: 0.5,
+       renderCell: (params) => {
+        const menuItems = [
+          { label: 'Copy Invoice', onClick: () => handleCopyLink(params.row.id) },
+          { label: 'View Invoice', onClick: () => viewInvoice(params.row.id) },
+          { label: 'Edit Invoice', onClick: () => editInvoice(params.row.id) },
+          { label: 'Delete Invoice', onClick: () => deleteInvoice(params.row.id) },
+        ];
+        
+        return <PositionedMenu menuItems={menuItems} />;
+      },
     },
   ];
 
@@ -156,38 +139,45 @@ const Invoices = () => {
     );
   };
 
+  const editInvoice = (id) => {
+    navigate(`${id}/edit`);
+  };
+
   const handleCopyLink = (invoiceId) => {
     const encodedData = btoa(`${invoiceId},${U_EMAIL}`);
-    const link = `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`;
-    // const link = `https://nebulainfinite.com/system-api/invoice_pdf?data=${encodedData}`;
-    navigator.clipboard.writeText(link).then(() => {
-      toast.success("Link copied to clipboard!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: theme.palette.mode === "dark" ? "dark" : "light",
+    // const link = `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`;
+    const link = `https://nebulainfinite.com/system-api/invoice_pdf?data=${encodedData}`;
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        toast.success("Link copied to clipboard!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+      })
+      .catch((error) => {
+        toast.error("Failed to copy the link!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
       });
-    }).catch((error) => {
-      toast.error("Failed to copy the link!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: theme.palette.mode === "dark" ? "dark" : "light",
-      });
-    });
   };
 
   const fetchInvoice = useCallback(() => {
     axios
-      .get(`${BASE_URL}/system-api/getInvoice?email=${U_EMAIL}`)
+      .get(`${BASE_URL}/system-api/invoice?email=${U_EMAIL}`)
       .then(function (response) {
         // console.log(response.data.invoice);
         if (response.data.status === 1) {
@@ -299,6 +289,49 @@ const Invoices = () => {
       setFilteredData(productData);
     }
   }, [selectedStartDate, selectedEndDate, productData]);
+
+  const deleteInvoice = (invoiceId) => {
+  
+    axios
+      .delete(
+        `${BASE_URL}/system-api/invoice?id=${invoiceId}&email=${U_EMAIL}`
+      )
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+          fetchInvoice();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+  };
 
   if (!initialValuesSet) {
     return <Loader />;

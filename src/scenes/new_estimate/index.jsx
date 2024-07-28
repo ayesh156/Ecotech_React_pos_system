@@ -11,8 +11,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataProduct, sampleCustomerData } from "../../data/mockData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -26,30 +25,38 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SendIcon from "@mui/icons-material/Send";
+import Loader from "../../components/Loader";
 import { useNavigate } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import { Formik } from "formik";
 import * as yup from "yup";
+import axios from "axios";
 import SaveIcon from "@mui/icons-material/Save";
+import { ToastContainer, toast } from "react-toastify";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const customerInitialValues = {
   name: "",
   email: "",
-  contact: "",
+  mobile: "",
 };
+
+const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
 
 const customerSchema = yup.object().shape({
   name: yup.string().required("required"),
+  mobile: yup.string().matches(phoneRegExp, "Phone number is not valid"),
 });
 
 const productInitialValues = {
   name: "",
   description: "",
-  buyingPrice: "",
-  sellingPrice: "",
+  buying_price: "",
+  selling_price: "",
 };
 
 const productSchema = yup.object().shape({
@@ -73,17 +80,36 @@ const New_Estimate = () => {
   const [isDateError, setIsDateError] = useState(false);
   const [isDueDateError, setIsDueDateError] = useState(false);
   const [estimateName, setEstimateName] = useState("");
+  const [subhead, setSubhead] = useState("");
   const [estimateNumber, setEstimateNumber] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
   const [notes, setNotes] = useState("");
-  const [subhead, setSubhead] = useState("");
+  const [paymentInstructions, setPaymentInstructions] = useState("");
   const [saveLoading, setSaveLoading] = useState(false);
-  const [printLoading, setPrintLoading] = useState(false);
+  const [footerNotes, setFooterNotes] = useState("");
   const [sendLoading, setSendLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [customerLoading, setCustomerLoading] = useState(false);
+  const [productLoading, setProductLoading] = useState(false);
   const navigate = useNavigate();
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [productNameEmpty, setProductNameEmpty] = useState(true);
+  const [customerNameEmpty, setCustomerNameEmpty] = useState(true);
+  const [initialValuesSet, setInitialValuesSet] = useState(false);
+  const [printLoading, setPrintLoading] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [estimateError, setEstimateError] = useState(null);
+  
+  const [productData, setProductData] = useState({
+    name: "",
+    description: "",
+    buying_price: "",
+    selling_price: "",
+  });
+  const [customerData, setCustomerData] = useState({
+    name: "",
+  });
 
   const paidAmountChange = (event) => {
     const amount = parseFloat(event.target.value);
@@ -179,8 +205,6 @@ const New_Estimate = () => {
   }, [gridRows]);
 
   const collectData = () => {
-    const intEstimateNumber = parseInt(estimateNumber);
-
     // Collect values from Datepickers
     const selectedDateValue = selectedDate
       ? selectedDate.format("YYYY-MM-DD")
@@ -190,22 +214,33 @@ const New_Estimate = () => {
       : null;
 
     // Collect values from DataGrid rows
-    const productTable = gridRows.map((row) => ({
-      name: row.name,
-      description: row.description,
-      qty: row.qty,
-      price: row.price,
-      tax: row.tax,
-      amount: row.amount,
-    }));
+    const productTable = gridRows.map((row) => {
+      // Find the corresponding product data by name (or ID if available)
+      const productInfo = productData.find(
+        (product) => product.name === row.name
+      );
+
+      return {
+        name: row.name,
+        description: row.description,
+        qty: row.qty,
+        price: row.price,
+        tax: row.tax,
+        buying_price: productInfo
+          ? parseInt(productInfo.buying_price, 10) || 0
+          : 0,
+      };
+    });
 
     // Combine all collected values into one object
     const collectedData = {
       customerId,
       estimateName,
-      estimateNumber: intEstimateNumber,
-      notes,
       subhead,
+      estimateNumber,
+      notes,
+      paymentInstructions,
+      footerNotes,
       selectedDate: selectedDateValue,
       selectedDueDate: selectedDueDateValue,
       paidAmount,
@@ -215,75 +250,215 @@ const New_Estimate = () => {
     return collectedData;
   };
 
+  const fetchProduct = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getProducts?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setProductData(response.data.product);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchProduct();
+    }
+  }, [initialValuesSet, fetchProduct]);
+
+  const fetchEstimateId = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getEstimateId?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setEstimateNumber(response.data.estimate_id);
+          setEstimateError(null);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchEstimateId();
+    }
+  }, [initialValuesSet, fetchEstimateId]);
+
   const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = { ...values, user_email: U_EMAIL };
 
-    setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
+    setProductLoading(true);
 
-      resetForm();
+    axios
+      .post(`${BASE_URL}/system-api/product`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-      setIsLoading(false);
-      setOpenNProduct(false);
-    }, 1000); // Change the timeout value as needed
+          // After saving the product, fetch the updated product data
+          fetchProduct();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setProductLoading(false);
+        setOpenNProduct(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
+
+  const fetchCustomer = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getCustomers?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setCustomerData(response.data.customer);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching customer data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!initialValuesSet) {
+      fetchCustomer();
+    }
+  }, [initialValuesSet, fetchCustomer]);
 
   const saveCustomer = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = {
+      ...values, // Include selected province in the saved object
+      user_email: U_EMAIL,
+    };
+    setCustomerLoading(true);
 
-    setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
+    axios
+      .post(`${BASE_URL}/system-api/customer`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-      resetForm();
+          // After saving the customer, fetch the updated customer data
+          fetchCustomer();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setCustomerLoading(false);
+        setOpenNCustomer(false);
+      });
 
-      setIsLoading(false);
-      setOpenNCustomer(false);
-    }, 1000); // Change the timeout value as needed
-  };
-
-  const printEstimate = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
-      return;
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
     }
-
-    setPrintLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-      console.log(collectedData);
-
-      // Reset form data
-      resetInputs();
-
-      setPrintLoading(false);
-    }, 1000);
   };
 
-  const sendEstimate = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
-      return;
+  useEffect(() => {
+    if (!toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
     }
-
-    setSendLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-      console.log(collectedData);
-
-      // Reset form data
-      resetInputs();
-
-      setSendLoading(false);
-    }, 1000);
-  };
-
+  }, [toastDisplayed, toastMsg, theme.palette.mode]);
+  
   const saveEstimate = () => {
+    if (!estimateNumber) {
+      setEstimateError("Estimate number required");
+      return;
+    }
+
+    if (isNaN(estimateNumber)) {
+      setEstimateError("Please enter a number");
+      return;
+    }
+
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -292,15 +467,210 @@ const New_Estimate = () => {
     }
 
     setSaveLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-      console.log(collectedData);
 
-      // Reset form data
-      resetInputs();
+    const collectedData = { ...collectData(), action: 'save' }; // Add action parameter
+    // console.log(collectedData);
 
-      setSaveLoading(false);
-    }, 1000);
+    axios
+      .post(`${BASE_URL}/system-api/estimate?email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+        
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        fetchEstimateId();
+        resetInputs();
+        setSaveLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+  };
+
+  const printEstimate = () => {
+    if (!estimateNumber) {
+      setEstimateError("Estimate number required");
+      return;
+    }
+
+    if (isNaN(estimateNumber)) {
+      setEstimateError("Please enter a number");
+      return;
+    }
+
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setPrintLoading(true);
+
+    const collectedData = { ...collectData(), action: 'save' }; // Add action parameter
+    // console.log(collectedData);
+
+    axios
+      .post(`${BASE_URL}/system-api/estimate?email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+           // Prepare data for the PDF URL
+        const estimateId = response.data.estimate_id;
+        const encodedData = btoa(`${estimateId},${U_EMAIL}`);
+
+        // Open the PDF in a new window and trigger the print dialog
+        const pdfWindow = window.open(
+          `${BASE_URL}/system-api/estimate_pdf?data=${encodedData}`,
+          "_blank"
+        );
+
+        // Optional: Check if PDF is loaded and trigger print dialog
+        pdfWindow.onload = () => {
+          pdfWindow.print();
+        };
+        
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        fetchEstimateId();
+        resetInputs();
+        setPrintLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+  };
+
+  const sendEstimate = () => {
+    if (!estimateNumber) {
+      setEstimateError("Estimate number required");
+      return;
+    }
+
+    if (isNaN(estimateNumber)) {
+      setEstimateError("Please enter a number");
+      return;
+    }
+
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setSendLoading(true);
+
+    const collectedData = { ...collectData(), action: 'send' }; // Add action parameter
+    // console.log(collectedData);
+
+    axios
+      .post(`${BASE_URL}/system-api/estimate?email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+          setTimeout(() => {
+            const estimateId = response.data.estimate_id;
+            const encodedData = btoa(`${estimateId},${U_EMAIL}`);
+            window.open(
+              `${BASE_URL}/system-api/estimate_pdf?data=${encodedData}`,
+              "_blank"
+            );
+          }, 1000);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        fetchEstimateId();
+        resetInputs();
+        setSendLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
   const resetInputs = () => {
@@ -311,10 +681,8 @@ const New_Estimate = () => {
     setIsDateError(false);
     setSelectedDueDate(null);
     setIsDueDateError(null);
-    setSubhead("");
-    setEstimateNumber("");
-    setNotes("");
     setEstimateName("");
+    setSubhead("");
     setPaidAmount("");
 
     // Clear table rows
@@ -371,10 +739,39 @@ const New_Estimate = () => {
     setLastId(newId);
   };
 
+  const fetchEstimate = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getDefaultDetails?email=${U_EMAIL}`)
+      .then((response) => {
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          const userData = response.data.defaultData;
+          // console.log(userData);
+          setFooterNotes(userData.footerNotes);
+          setNotes(userData.notes);
+          setPaymentInstructions(userData.paymentInstructions);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchEstimate();
+  }, [fetchEstimate, customerData, fetchProduct]);
+
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
     const taxAmount = (amount * tax) / 100;
-    const totalAmount = amount - taxAmount;
+    const totalAmount = amount + taxAmount;
     return totalAmount;
   };
 
@@ -403,8 +800,13 @@ const New_Estimate = () => {
     setOpen(false);
   };
 
+  if (!initialValuesSet) {
+    return <Loader />;
+  }
+
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -447,6 +849,7 @@ const New_Estimate = () => {
             }}
           />
         </Box>
+
         <Box
           sx={{
             display: "flex",
@@ -491,12 +894,10 @@ const New_Estimate = () => {
               <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={sampleCustomerData}
+                options={customerData}
                 value={
                   customer
-                    ? sampleCustomerData.find(
-                        (option) => option.name === customer
-                      )
+                    ? customerData.find((option) => option.name === customer)
                     : null
                 }
                 getOptionLabel={(option) => option.name}
@@ -539,8 +940,18 @@ const New_Estimate = () => {
               sx={{ alignSelf: "flex-end" }}
               value={estimateNumber}
               onChange={(event) => {
-                setEstimateNumber(event.target.value);
+                const value = event.target.value;
+                setEstimateNumber(value);
+                if (!value) {
+                  setEstimateError("Estimate number is required");
+                } else if (isNaN(value)) {
+                  setEstimateError("Please enter a number");
+                } else {
+                  setEstimateError(null);
+                }
               }}
+              error={!!estimateError}
+              helperText={estimateError}
             />
           </Box>
           <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
@@ -594,11 +1005,41 @@ const New_Estimate = () => {
 
       <Box m="40px 0 0 0" height="75vh">
         <Box
+          m="20px 0 0 0"
+          sx={{
+            "& .MuiDataGrid-root": {
+              border: "none",
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "none",
+            },
+            "& .name-column--cell": {
+              color: colors.greenAccent[300],
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: colors.blueAccent[700],
+              borderBottom: "none",
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              backgroundColor: colors.primary[400],
+            },
+            "& .MuiDataGrid-footerContainer": {
+              borderTop: "none",
+              backgroundColor: colors.blueAccent[700],
+            },
+            "& .MuiCheckbox-root": {
+              color: `${colors.greenAccent[200]} !important`,
+            },
+          }}
+        >
+          <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
+        </Box>
+        <Box
           sx={{
             display: "flex",
             justifyContent: "flex-start",
             mt: 2,
-            mb: 5,
+            mb: 2,
             gap: 2,
           }}
         >
@@ -635,10 +1076,14 @@ const New_Estimate = () => {
                     </Button>
                     <Autocomplete
                       key={fieldName}
-                      options={mockDataProduct}
+                      options={productData}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          addAnotherProduct();
+                        }}}
                       value={
                         newRow.name
-                          ? mockDataProduct.find(
+                          ? productData.find(
                               (option) => option.name === newRow.name
                             )
                           : null
@@ -650,7 +1095,7 @@ const New_Estimate = () => {
                             ...prevRow,
                             name: newValue.name,
                             description: newValue.description,
-                            price: newValue.sellingPrice.toString(),
+                            price: newValue.selling_price.toString(),
                             qty: "1",
                           }));
                         } else {
@@ -681,6 +1126,10 @@ const New_Estimate = () => {
                   <TextField
                     key={fieldName}
                     color="secondary"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        addAnotherProduct();
+                      }}}
                     label={
                       fieldName === "tax"
                         ? `${
@@ -723,37 +1172,6 @@ const New_Estimate = () => {
             }
             return null;
           })}
-        </Box>
-
-        <Box
-          m="20px 0 0 0"
-          sx={{
-            "& .MuiDataGrid-root": {
-              border: "none",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "none",
-            },
-            "& .name-column--cell": {
-              color: colors.greenAccent[300],
-            },
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: colors.blueAccent[700],
-              borderBottom: "none",
-            },
-            "& .MuiDataGrid-virtualScroller": {
-              backgroundColor: colors.primary[400],
-            },
-            "& .MuiDataGrid-footerContainer": {
-              borderTop: "none",
-              backgroundColor: colors.blueAccent[700],
-            },
-            "& .MuiCheckbox-root": {
-              color: `${colors.greenAccent[200]} !important`,
-            },
-          }}
-        >
-          <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
         </Box>
         <Box display="flex" justifyContent="space-between" py={1}>
           <Button
@@ -809,6 +1227,35 @@ const New_Estimate = () => {
           </Box>
         </Box>
         <Box
+          sx={{ display: "flex", justifyContent: "space-between", gap: "20px" }}
+        >
+          <TextField
+            label="Notes"
+            multiline
+            rows={4}
+            color="secondary"
+            fullWidth
+            sx={{ marginTop: "10px" }}
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+            }}
+          />
+          <TextField
+            label="Payment Instructions"
+            multiline
+            rows={4}
+            color="secondary"
+            fullWidth
+            sx={{ marginTop: "10px" }}
+            value={paymentInstructions}
+            onChange={(event) => {
+              setPaymentInstructions(event.target.value);
+            }}
+          />
+        </Box>
+        
+        <Box
           mt={5}
           pb={4}
           sx={{
@@ -820,10 +1267,10 @@ const New_Estimate = () => {
           <TextField
             fullWidth
             color="secondary"
-            label="Notes"
-            value={notes}
+            label="Add footer notes"
+            value={footerNotes}
             onChange={(event) => {
-              setNotes(event.target.value);
+              setFooterNotes(event.target.value);
             }}
           />
           <Box
@@ -1025,6 +1472,7 @@ const New_Estimate = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1042,7 +1490,10 @@ const New_Estimate = () => {
                         type="text"
                         label="Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setProductNameEmpty(event.target.value.trim() === ""); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1079,8 +1530,8 @@ const New_Estimate = () => {
                         label="Buying Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.buyingPrice}
-                        name="buyingPrice"
+                        value={values.buying_price}
+                        name="buying_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1095,8 +1546,8 @@ const New_Estimate = () => {
                         label="Selling Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.sellingPrice}
-                        name="sellingPrice"
+                        value={values.selling_price}
+                        name="selling_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1116,8 +1567,9 @@ const New_Estimate = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={productLoading} // Pass loading state to LoadingButton
                       type="submit"
+                      disabled={!isValid || productNameEmpty}
                       sx={{
                         textTransform: "capitalize", // Remove text transformation
                         backgroundColor: "transparent", // Remove background color
@@ -1161,6 +1613,7 @@ const New_Estimate = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1178,7 +1631,12 @@ const New_Estimate = () => {
                         type="text"
                         label="Customer Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setCustomerNameEmpty(
+                            event.target.value.trim() === ""
+                          ); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1213,8 +1671,10 @@ const New_Estimate = () => {
                         label="Phone"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.contact}
-                        name="contact"
+                        value={values.mobile}
+                        name="mobile"
+                        error={!!touched.mobile && !!errors.mobile}
+                        helperText={touched.mobile && errors.mobile}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1234,7 +1694,8 @@ const New_Estimate = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={customerLoading} // Pass loading state to LoadingButton
+                      disabled={!isValid || customerNameEmpty}
                       type="submit"
                       sx={{
                         textTransform: "capitalize", // Remove text transformation

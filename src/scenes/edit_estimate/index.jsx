@@ -26,37 +26,39 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { useNavigate, useParams } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
-import {
-  mockEstimate,
-  sampleCustomerData,
-  mockDataProduct,
-} from "../../data/mockData";
 import Loader from "../../components/Loader";
 import dayjs from "dayjs";
 import PageNotFound from "../page_not_found";
 import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
-import SaveIcon from "@mui/icons-material/Save";
 import { Formik } from "formik";
 import * as yup from "yup";
 import SendIcon from "@mui/icons-material/Send";
+import SaveIcon from "@mui/icons-material/Save";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BASE_URL, U_EMAIL } from "../../config";
 
 const customerInitialValues = {
   name: "",
   email: "",
-  contact: "",
+  mobile: "",
 };
+
+const phoneRegExp = /^[0]{1}[1245678]{1}[01245678]{1}[0-9]{7}$/;
 
 const customerSchema = yup.object().shape({
   name: yup.string().required("required"),
+  mobile: yup.string().matches(phoneRegExp, "Phone number is not valid"),
 });
 
 const productInitialValues = {
   name: "",
   description: "",
-  buyingPrice: "",
-  sellingPrice: "",
+  buying_price: "",
+  selling_price: "",
 };
 
 const productSchema = yup.object().shape({
@@ -80,19 +82,34 @@ const Edit_Estimate = () => {
   const [isDateError, setIsDateError] = useState(false);
   const [isDueDateError, setIsDueDateError] = useState(false);
   const [estimateName, setEstimateName] = useState("");
+  const [subhead, setSubhead] = useState("");
   const [estimateNumber, setEstimateNumber] = useState("");
   const [notes, setNotes] = useState("");
-  const [subhead, setSubhead] = useState("");
+  const [paymentInstructions, setPaymentInstructions] = useState("");
+  const [footerNotes, setFooterNotes] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [customerLoading, setCustomerLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [printLoading, setPrintLoading] = useState(false);
-  const [sendLoading, setSendLoading] = useState(false);
+  const [productLoading, setProductLoading] = useState(false);
   const navigate = useNavigate();
   const [initialValuesSet, setInitialValuesSet] = useState(false);
-  const [resultFound, setResultFound] = useState(false);
+  const [productNameEmpty, setProductNameEmpty] = useState(true);
+  const [customerNameEmpty, setCustomerNameEmpty] = useState(true);
+  const [resultFound, setResultFound] = useState(true);
   const [openNProduct, setOpenNProduct] = useState(false);
   const [openNCustomer, setOpenNCustomer] = useState(false);
+  const [toastDisplayed, setMsgDisplayed] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [estimateError, setEstimateError] = useState(null);
+  const [productData, setProductData] = useState({
+    name: "",
+    description: "",
+    buying_price: "",
+    selling_price: "",
+  });
+  const [customerData, setCustomerData] = useState([]);
 
   const { id } = useParams();
 
@@ -181,45 +198,51 @@ const Edit_Estimate = () => {
   ];
 
   const fetchProduct = useCallback(() => {
-    const product = mockEstimate.find(
-      (item) => item.estimateNumber === parseInt(id)
-    );
-
-    if (product) {
-      setResultFound(true);
-      setGridRows(product.productTable);
-      setTotalAmount(calculateTotalAmount(product.productTable));
-      setSelectedDate(product.selectedDate);
-      setSelectedDueDate(product.selectedDueDate);
-      setEstimateName(product.estimateName);
-      setSubhead(product.subhead);
-      setEstimateNumber(product.estimateNumber);
-      setNotes(product.notes);
-      setPaidAmount(product.paidAmount);
-
-      const customerData = sampleCustomerData.find(
-        (customer) => customer.id === product.customerId
-      );
-
-      // Set the customer name if customerData is found
-      if (customerData) {
-        setCustomer(customerData.name);
-        setCustomerId(customerData.id);
-      }
-
-      setTimeout(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getProducts?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setProductData(response.data.product);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching product data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
         setInitialValuesSet(true);
-      }, 1000);
-    } else {
-      console.log("Not Found " + id);
-    }
-  }, [id]);
+      });
+  }, []);
 
   useEffect(() => {
-    if (!initialValuesSet) {
-      fetchProduct();
-    }
+    fetchProduct();
   }, [initialValuesSet, fetchProduct]);
+
+  const fetchCustomer = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getCustomers?email=${U_EMAIL}`)
+      .then(function (response) {
+        if (response.data.status === 1) {
+          setCustomerData(response.data.customer);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch(function (error) {
+        console.error("Error fetching customer data:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [fetchCustomer]);
 
   useEffect(() => {
     if (initialValuesSet) {
@@ -244,33 +267,58 @@ const Edit_Estimate = () => {
   }, [gridRows]);
 
   const collectData = () => {
-    const intEstimateNumber = parseInt(estimateNumber);
-
     // Collect values from Datepickers
-    const selectedDateValue = selectedDate
-      ? dayjs(selectedDate).format("YYYY-MM-DD")
-      : null;
-    const selectedDueDateValue = selectedDueDate
-      ? dayjs(selectedDueDate).format("YYYY-MM-DD")
-      : null;
+    const isString = (value) => typeof value === "string";
+
+    let selectedDateValue = null;
+
+    if (isString(selectedDate)) {
+      selectedDateValue = selectedDate;
+    } else {
+      selectedDateValue = selectedDate
+        ? selectedDate.format("YYYY-MM-DD")
+        : null;
+    }
+
+    let selectedDueDateValue = null;
+
+    if (isString(selectedDate)) {
+      selectedDueDateValue = selectedDueDate;
+    } else {
+      selectedDueDateValue = selectedDueDate
+        ? selectedDueDate.format("YYYY-MM-DD")
+        : null;
+    }
 
     // Collect values from DataGrid rows
-    const productTable = gridRows.map((row) => ({
-      name: row.name,
-      description: row.description,
-      qty: row.qty,
-      price: row.price,
-      tax: row.tax,
-      amount: row.amount,
-    }));
+    const productTable = gridRows.map((row) => {
+      // Find the corresponding product data by name (or ID if available)
+      const productInfo = productData.find(
+        (product) => product.name === row.name
+      );
+
+      return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        qty: row.qty,
+        price: row.price,
+        tax: row.tax,
+        buying_price: productInfo
+          ? parseInt(productInfo.buying_price, 10) || 0
+          : 0,
+      };
+    });
 
     // Combine all collected values into one object
     const collectedData = {
       customerId,
       estimateName,
-      estimateNumber: intEstimateNumber,
-      notes,
       subhead,
+      estimateNumber,
+      notes,
+      paymentInstructions,
+      footerNotes,
       selectedDate: selectedDateValue,
       selectedDueDate: selectedDueDateValue,
       paidAmount,
@@ -280,54 +328,123 @@ const Edit_Estimate = () => {
     return collectedData;
   };
 
-  const saveProduct = (values, { resetForm }) => {
-    const updatedValues = { ...values };
-
-    setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
-
-      resetForm();
-
-      setIsLoading(false);
-      setOpenNProduct(false);
-    }, 1000); // Change the timeout value as needed
-  };
-
   const saveCustomer = (values, { resetForm }) => {
-    const updatedValues = { ...values };
+    const updatedValues = {
+      ...values, // Include selected province in the saved object
+      user_email: U_EMAIL,
+    };
+    setCustomerLoading(true);
 
-    setIsLoading(true);
-    setTimeout(() => {
-      console.log(updatedValues);
+    // console.log(updatedValues);
 
-      resetForm();
+    axios
+      .post(`${BASE_URL}/system-api/customer`, updatedValues)
+      .then((response) => {
+        // console.log(response.data);
+        // Handle successful response, if needed
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
 
-      setIsLoading(false);
-      setOpenNCustomer(false);
-    }, 1000); // Change the timeout value as needed
+          // After saving the customer, fetch the updated customer data
+          fetchCustomer();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setCustomerLoading(false);
+        setOpenNCustomer(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
-  const printEstimate = () => {
-    if (!customer || !selectedDate || !selectedDueDate) {
-      setIsCustomerError(!customer);
-      setIsDateError(!selectedDate);
-      setIsDueDateError(!selectedDueDate);
-      return;
+  const saveProduct = (values, { resetForm }) => {
+    const updatedValues = { ...values, user_email: U_EMAIL };
+
+    setProductLoading(true);
+
+    axios
+      .post(`${BASE_URL}/system-api/product`, updatedValues)
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+          // After saving the product, fetch the updated product data
+          fetchProduct();
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        resetForm();
+        setProductLoading(false);
+        setOpenNProduct(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
     }
-
-    setPrintLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
-
-      console.log(id);
-      console.log(collectedData);
-
-      setPrintLoading(false);
-    }, 1000);
   };
 
   const sendEstimate = () => {
+    if (!estimateNumber) {
+      setEstimateError("Estimate number required");
+      return;
+    }
+
+    if (isNaN(estimateNumber)) {
+      setEstimateError("Please enter a number");
+      return;
+    }
+
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -336,17 +453,74 @@ const Edit_Estimate = () => {
     }
 
     setSendLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
 
-      console.log(id);
-      console.log(collectedData);
+    const collectedData = { ...collectData(), action: 'send' }; // Add action parameter
 
-      setSendLoading(false);
-    }, 1000);
+    // console.log(collectedData);
+
+    axios
+      .put(
+        `${BASE_URL}/system-api/estimate?id=${id}&email=${U_EMAIL}`,
+        collectedData
+      )
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+          
+          setTimeout(() => {
+            const encodedData = btoa(`${id},${U_EMAIL}`);
+            window.open(
+              `${BASE_URL}/system-api/estimate_pdf?data=${encodedData}`,
+              "_blank"
+            );
+          }, 1000);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setSendLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
-  const saveEstimate = () => {
+  const updateEstimate = () => {
+    if (!estimateNumber) {
+      setEstimateError("Estimate number required");
+      return;
+    }
+
+    if (isNaN(estimateNumber)) {
+      setEstimateError("Please enter a number");
+      return;
+    }
+
     if (!customer || !selectedDate || !selectedDueDate) {
       setIsCustomerError(!customer);
       setIsDateError(!selectedDate);
@@ -355,14 +529,130 @@ const Edit_Estimate = () => {
     }
 
     setSaveLoading(true);
-    setTimeout(() => {
-      const collectedData = collectData();
 
-      console.log(id);
-      console.log(collectedData);
+    const collectedData = { ...collectData(), action: 'save' }; // Add action parameter
+    // console.log(collectedData);
 
-      setSaveLoading(false);
-    }, 1000);
+    axios
+      .put(`${BASE_URL}/system-api/estimate?id=${id}&email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+        
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setSaveLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+  };
+
+  const printEstimate = () => {
+    if (!estimateNumber) {
+      setEstimateError("Estimate number required");
+      return;
+    }
+
+    if (isNaN(estimateNumber)) {
+      setEstimateError("Please enter a number");
+      return;
+    }
+
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setPrintLoading(true);
+
+    const collectedData = { ...collectData(), action: 'save' }; // Add action parameter
+    // console.log(collectedData);
+
+    axios
+      .put(`${BASE_URL}/system-api/estimate?id=${id}&email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+           // Prepare data for the PDF URL
+        const estimateId = response.data.estimate_id;
+        const encodedData = btoa(`${estimateId},${U_EMAIL}`);
+
+        // Open the PDF in a new window and trigger the print dialog
+        const pdfWindow = window.open(
+          `${BASE_URL}/system-api/estimate_pdf?data=${encodedData}`,
+          "_blank"
+        );
+
+        // Optional: Check if PDF is loaded and trigger print dialog
+        pdfWindow.onload = () => {
+          pdfWindow.print();
+        };
+        
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setPrintLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
   };
 
   const [newRow, setNewRow] = useState({
@@ -420,7 +710,7 @@ const Edit_Estimate = () => {
     productTable.forEach((product) => {
       const amount = product.qty * product.price;
       const taxAmount = (amount * product.tax) / 100;
-      total += amount - taxAmount;
+      total += amount + taxAmount;
     });
     return total;
   };
@@ -428,7 +718,7 @@ const Edit_Estimate = () => {
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
     const taxAmount = (amount * tax) / 100;
-    const totalAmount = amount - taxAmount;
+    const totalAmount = amount + taxAmount;
     return totalAmount;
   };
 
@@ -457,14 +747,85 @@ const Edit_Estimate = () => {
     setOpen(false);
   };
 
-  if (!resultFound) {
-    return <PageNotFound />;
-  } else if (!initialValuesSet) {
+  const fetchEstimate = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/estimate?id=${id}&email=${U_EMAIL}`)
+      .then((response) => {
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          const userData = response.data.estimate;
+          setGridRows(userData.productTable);
+          setTotalAmount(calculateTotalAmount(userData.productTable));
+          setSelectedDate(userData.selectedDate);
+          setSelectedDueDate(userData.selectedDueDate);
+          setEstimateName(userData.estimateName);
+          setSubhead(userData.subhead);
+          setEstimateNumber(userData.estimateNumber);
+          setNotes(userData.notes);
+          setPaymentInstructions(userData.paymentInstructions);
+          setFooterNotes(userData.footerNotes);
+          setPaidAmount(userData.paidAmount);
+          // Find and set the selected customer
+
+          const selectedCustomer = customerData.find(
+            (customer) => customer.id === userData.customerId
+          );
+          if (selectedCustomer) {
+            setCustomer(selectedCustomer);
+            setCustomerId(selectedCustomer.id);
+          }
+          setResultFound(true);
+          setMsgDisplayed(true);
+        } else {
+          setResultFound(false);
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, [id, customerData]);
+
+  useEffect(() => {
+    fetchEstimate();
+  }, [fetchEstimate, customerData, fetchProduct]);
+
+  useEffect(() => {
+    if (initialValuesSet && !toastDisplayed && toastMsg) {
+      setTimeout(() => {
+        toast.error(toastMsg, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: theme.palette.mode === "dark" ? "dark" : "light",
+        });
+        setMsgDisplayed(true);
+      }, 1000);
+    }
+  }, [initialValuesSet, toastDisplayed, toastMsg, theme.palette.mode]);
+
+  if (!initialValuesSet) {
     return <Loader />;
+  } else if (!resultFound) {
+    return (
+      <>
+        <ToastContainer />
+        <PageNotFound />
+      </>
+    );
   }
 
   return (
     <Box m="20px">
+      <ToastContainer />
       <Button
         sx={{ display: "flex", alignItems: "center" }}
         color="inherit"
@@ -552,22 +913,17 @@ const Edit_Estimate = () => {
               <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={sampleCustomerData}
-                value={
-                  customer
-                    ? sampleCustomerData.find(
-                        (option) => option.name === customer
-                      )
-                    : null
-                }
+                options={customerData}
+                value={customer}
                 getOptionLabel={(option) => option.name}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
                 onChange={(event, newValue) => {
                   if (newValue) {
-                    setCustomer(newValue.name);
+                    setCustomer(newValue);
                     setCustomerId(newValue.id);
                     setIsCustomerError(false);
                   } else {
-                    setCustomer("");
+                    setCustomer(null);
                     setCustomerId("");
                     setIsCustomerError(true);
                   }
@@ -579,7 +935,7 @@ const Edit_Estimate = () => {
                     {isCustomerError && (
                       <FormHelperText
                         sx={{
-                          color: colors.redAccent[500],
+                          color: "red",
                           marginLeft: "10px",
                           position: "absolute",
                           bottom: -20,
@@ -600,8 +956,18 @@ const Edit_Estimate = () => {
               sx={{ alignSelf: "flex-end" }}
               value={estimateNumber}
               onChange={(event) => {
-                setEstimateNumber(event.target.value);
+                const value = event.target.value;
+                setEstimateNumber(value);
+                if (!value) {
+                  setEstimateError("Estimate number is required");
+                } else if (isNaN(value)) {
+                  setEstimateError("Please enter a number");
+                } else {
+                  setEstimateError(null);
+                }
               }}
+              error={!!estimateError}
+              helperText={estimateError}
             />
           </Box>
           <Box sx={{ display: "flex", gap: "20px", marginTop: "10px" }}>
@@ -654,12 +1020,43 @@ const Edit_Estimate = () => {
       </Box>
 
       <Box m="40px 0 0 0" height="75vh">
+
+        <Box
+          m="20px 0 0 0"
+          sx={{
+            "& .MuiDataGrid-root": {
+              border: "none",
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "none",
+            },
+            "& .name-column--cell": {
+              color: colors.greenAccent[300],
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: colors.blueAccent[700],
+              borderBottom: "none",
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              backgroundColor: colors.primary[400],
+            },
+            "& .MuiDataGrid-footerContainer": {
+              borderTop: "none",
+              backgroundColor: colors.blueAccent[700],
+            },
+            "& .MuiCheckbox-root": {
+              color: `${colors.greenAccent[200]} !important`,
+            },
+          }}
+        >
+          <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
+        </Box>
         <Box
           sx={{
             display: "flex",
             justifyContent: "flex-start",
             mt: 2,
-            mb: 5,
+            mb: 2,
             gap: 2,
           }}
         >
@@ -696,10 +1093,14 @@ const Edit_Estimate = () => {
                     </Button>
                     <Autocomplete
                       key={fieldName}
-                      options={mockDataProduct}
+                      options={productData}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          addAnotherProduct();
+                        }}}
                       value={
                         newRow.name
-                          ? mockDataProduct.find(
+                          ? productData.find(
                               (option) => option.name === newRow.name
                             )
                           : null
@@ -711,7 +1112,7 @@ const Edit_Estimate = () => {
                             ...prevRow,
                             name: newValue.name,
                             description: newValue.description,
-                            price: newValue.sellingPrice.toString(),
+                            price: newValue.selling_price.toString(),
                             qty: "1",
                           }));
                         } else {
@@ -742,6 +1143,10 @@ const Edit_Estimate = () => {
                   <TextField
                     key={fieldName}
                     color="secondary"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        addAnotherProduct();
+                      }}}
                     label={
                       fieldName === "tax"
                         ? `${
@@ -784,37 +1189,6 @@ const Edit_Estimate = () => {
             }
             return null;
           })}
-        </Box>
-
-        <Box
-          m="20px 0 0 0"
-          sx={{
-            "& .MuiDataGrid-root": {
-              border: "none",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "none",
-            },
-            "& .name-column--cell": {
-              color: colors.greenAccent[300],
-            },
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: colors.blueAccent[700],
-              borderBottom: "none",
-            },
-            "& .MuiDataGrid-virtualScroller": {
-              backgroundColor: colors.primary[400],
-            },
-            "& .MuiDataGrid-footerContainer": {
-              borderTop: "none",
-              backgroundColor: colors.blueAccent[700],
-            },
-            "& .MuiCheckbox-root": {
-              color: `${colors.greenAccent[200]} !important`,
-            },
-          }}
-        >
-          <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
         </Box>
         <Box display="flex" justifyContent="space-between" py={1}>
           <Button
@@ -870,6 +1244,34 @@ const Edit_Estimate = () => {
           </Box>
         </Box>
         <Box
+          sx={{ display: "flex", justifyContent: "space-between", gap: "20px" }}
+        >
+          <TextField
+            label="Notes"
+            multiline
+            rows={4}
+            color="secondary"
+            fullWidth
+            sx={{ marginTop: "10px" }}
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+            }}
+          />
+          <TextField
+            label="Payment Instructions"
+            multiline
+            rows={4}
+            color="secondary"
+            fullWidth
+            sx={{ marginTop: "10px" }}
+            value={paymentInstructions}
+            onChange={(event) => {
+              setPaymentInstructions(event.target.value);
+            }}
+          />
+        </Box>
+        <Box
           mt={5}
           pb={4}
           sx={{
@@ -881,10 +1283,10 @@ const Edit_Estimate = () => {
           <TextField
             fullWidth
             color="secondary"
-            label="Notes"
-            value={notes}
+            label="Add footer notes"
+            value={footerNotes}
             onChange={(event) => {
-              setNotes(event.target.value);
+              setFooterNotes(event.target.value);
             }}
           />
           <Box
@@ -916,7 +1318,7 @@ const Edit_Estimate = () => {
               loadingPosition="end"
               endIcon={<SaveIcon />}
               variant="contained"
-              onClick={saveEstimate}
+              onClick={updateEstimate}
               sx={{
                 textTransform: "capitalize",
                 color: colors.grey[100],
@@ -926,7 +1328,7 @@ const Edit_Estimate = () => {
                 },
               }}
             >
-              Save
+              Update
             </LoadingButton>
             <LoadingButton
               loading={sendLoading}
@@ -1050,9 +1452,12 @@ const Edit_Estimate = () => {
             </DialogContent>
           )}
           <DialogActions>
-            <Button onClick={() => {
-              setOpen(false);
-            }} sx={{ color: colors.primary[100] }}>
+            <Button
+              onClick={() => {
+                setOpen(false);
+              }}
+              sx={{ color: colors.primary[100] }}
+            >
               Close
             </Button>
             <Button onClick={saveEditedRow} sx={{ color: colors.primary[100] }}>
@@ -1083,6 +1488,7 @@ const Edit_Estimate = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1100,7 +1506,10 @@ const Edit_Estimate = () => {
                         type="text"
                         label="Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setProductNameEmpty(event.target.value.trim() === ""); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1137,8 +1546,8 @@ const Edit_Estimate = () => {
                         label="Buying Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.buyingPrice}
-                        name="buyingPrice"
+                        value={values.buying_price}
+                        name="buying_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1153,8 +1562,8 @@ const Edit_Estimate = () => {
                         label="Selling Price"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.sellingPrice}
-                        name="sellingPrice"
+                        value={values.selling_price}
+                        name="selling_price"
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1174,8 +1583,9 @@ const Edit_Estimate = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={productLoading} // Pass loading state to LoadingButton
                       type="submit"
+                      disabled={!isValid || productNameEmpty}
                       sx={{
                         textTransform: "capitalize", // Remove text transformation
                         backgroundColor: "transparent", // Remove background color
@@ -1219,6 +1629,7 @@ const Edit_Estimate = () => {
                 handleChange,
                 handleSubmit,
                 resetForm,
+                isValid,
               }) => (
                 <form onSubmit={handleSubmit}>
                   <DialogContent>
@@ -1236,7 +1647,12 @@ const Edit_Estimate = () => {
                         type="text"
                         label="Customer Name"
                         onBlur={handleBlur}
-                        onChange={handleChange}
+                        onChange={(event) => {
+                          handleChange(event);
+                          setCustomerNameEmpty(
+                            event.target.value.trim() === ""
+                          ); // Access value property before calling trim
+                        }}
                         value={values.name}
                         name="name"
                         error={!!touched.name && !!errors.name}
@@ -1271,8 +1687,10 @@ const Edit_Estimate = () => {
                         label="Phone"
                         onBlur={handleBlur}
                         onChange={handleChange}
-                        value={values.contact}
-                        name="contact"
+                        value={values.mobile}
+                        name="mobile"
+                        error={!!touched.mobile && !!errors.mobile}
+                        helperText={touched.mobile && errors.mobile}
                         sx={{
                           gridColumn: "span 4",
                           "& .MuiInputLabel-root.Mui-focused": {
@@ -1292,7 +1710,8 @@ const Edit_Estimate = () => {
                       Close
                     </Button>
                     <LoadingButton
-                      loading={isLoading} // Pass loading state to LoadingButton
+                      loading={customerLoading} // Pass loading state to LoadingButton
+                      disabled={!isValid || customerNameEmpty}
                       type="submit"
                       sx={{
                         textTransform: "capitalize", // Remove text transformation

@@ -30,10 +30,12 @@ import { useNavigate } from "react-router-dom";
 import KeyboardArrowLeftOutlinedIcon from "@mui/icons-material/KeyboardArrowLeftOutlined";
 import AddCardOutlinedIcon from "@mui/icons-material/AddCardOutlined";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
+import SaveIcon from "@mui/icons-material/Save";
 import { Formik } from "formik";
 import * as yup from "yup";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
+import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 import "react-toastify/dist/ReactToastify.css";
 import { BASE_URL, U_EMAIL } from "../../config";
 
@@ -80,6 +82,8 @@ const New_Invoice = () => {
   const [summary, setSummary] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
+  const [printLoading, setPrintLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
@@ -303,7 +307,7 @@ const New_Invoice = () => {
       .post(`${BASE_URL}/system-api/product`, updatedValues)
       .then((response) => {
         // Handle successful response, if needed
-        console.log(response.data);
+        // console.log(response.data);
         if (response.data.status === 1) {
           toast.success(response.data.message, {
             position: "top-right",
@@ -441,6 +445,157 @@ const New_Invoice = () => {
     }
   }, [toastDisplayed, toastMsg, theme.palette.mode]);
 
+  const printInvoice = () => {
+    if (!invoiceNumber) {
+      setInvoiceError("Invoice number required");
+      return;
+    }
+
+    if (isNaN(invoiceNumber)) {
+      setInvoiceError("Please enter a number");
+      return;
+    }
+
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setPrintLoading(true);
+
+    const collectedData = { ...collectData(), action: 'save' }; // Add action parameter
+    // console.log(collectedData);
+
+    axios
+      .post(`${BASE_URL}/system-api/invoice?email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+          
+
+           // Prepare data for the PDF URL
+        const invoiceId = response.data.invoice_id;
+        const encodedData = btoa(`${invoiceId},${U_EMAIL}`);
+
+        // Open the PDF in a new window and trigger the print dialog
+        const pdfWindow = window.open(
+          `${BASE_URL}/system-api/invoice_pdf?data=${encodedData}`,
+          "_blank"
+        );
+
+        // Optional: Check if PDF is loaded and trigger print dialog
+        pdfWindow.onload = () => {
+          pdfWindow.print();
+        };
+
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        fetchInvoiceId();
+        resetInputs();
+        setPrintLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+  };
+
+  const saveInvoice = () => {
+    if (!invoiceNumber) {
+      setInvoiceError("Invoice number required");
+      return;
+    }
+
+    if (isNaN(invoiceNumber)) {
+      setInvoiceError("Please enter a number");
+      return;
+    }
+
+    if (!customer || !selectedDate || !selectedDueDate) {
+      setIsCustomerError(!customer);
+      setIsDateError(!selectedDate);
+      setIsDueDateError(!selectedDueDate);
+      return;
+    }
+
+    setSaveLoading(true);
+
+    const collectedData = { ...collectData(), action: 'save' }; // Add action parameter
+    // console.log(collectedData);
+
+    axios
+      .post(`${BASE_URL}/system-api/invoice?email=${U_EMAIL}`, collectedData)
+      .then((response) => {
+        // Handle successful response, if needed
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          toast.success(response.data.message, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: theme.palette.mode === "dark" ? "dark" : "light",
+          });
+
+          
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        setToastMsg(error);
+      })
+      .finally(function () {
+        fetchInvoiceId();
+        resetInputs();
+        setSaveLoading(false);
+      });
+
+    if (toastMsg) {
+      toast.error(toastMsg, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: theme.palette.mode === "dark" ? "dark" : "light",
+      });
+    }
+  };
 
   const sendInvoice = () => {
     if (!invoiceNumber) {
@@ -462,14 +617,14 @@ const New_Invoice = () => {
 
     setSendLoading(true);
 
-    const collectedData = collectData();
+    const collectedData = { ...collectData(), action: 'send' }; // Add action parameter
     // console.log(collectedData);
 
     axios
       .post(`${BASE_URL}/system-api/invoice?email=${U_EMAIL}`, collectedData)
       .then((response) => {
         // Handle successful response, if needed
-        console.log(response.data);
+        // console.log(response.data);
         if (response.data.status === 1) {
           toast.success(response.data.message, {
             position: "top-right",
@@ -526,9 +681,6 @@ const New_Invoice = () => {
     setSelectedDueDate(null);
     setIsDueDateError(null);
     setSummary("");
-    setNotes("");
-    setPaymentInstructions("");
-    setFooterNotes("");
     setPaidAmount("");
 
     // Clear table rows
@@ -584,6 +736,35 @@ const New_Invoice = () => {
 
     setLastId(newId);
   };
+
+  const fetchInvoice = useCallback(() => {
+    axios
+      .get(`${BASE_URL}/system-api/getDefaultDetails?email=${U_EMAIL}`)
+      .then((response) => {
+        // console.log(response.data);
+        if (response.data.status === 1) {
+          const userData = response.data.defaultData;
+          // console.log(userData);
+          setFooterNotes(userData.footerNotes);
+          setNotes(userData.notes);
+          setPaymentInstructions(userData.paymentInstructions);
+          setMsgDisplayed(true);
+        } else {
+          setToastMsg(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user:", error);
+        setToastMsg(error);
+      })
+      .finally(function () {
+        setInitialValuesSet(true);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchInvoice();
+  }, [fetchInvoice, customerData, fetchProduct]);
 
   const calculateAmount = (qty, price, tax) => {
     const amount = qty * price;
@@ -813,11 +994,41 @@ const New_Invoice = () => {
 
       <Box m="40px 0 0 0" height="75vh">
         <Box
+          m="20px 0 0 0"
+          sx={{
+            "& .MuiDataGrid-root": {
+              border: "none",
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "none",
+            },
+            "& .name-column--cell": {
+              color: colors.greenAccent[300],
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: colors.blueAccent[700],
+              borderBottom: "none",
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              backgroundColor: colors.primary[400],
+            },
+            "& .MuiDataGrid-footerContainer": {
+              borderTop: "none",
+              backgroundColor: colors.blueAccent[700],
+            },
+            "& .MuiCheckbox-root": {
+              color: `${colors.greenAccent[200]} !important`,
+            },
+          }}
+        >
+          <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
+        </Box>
+        <Box
           sx={{
             display: "flex",
             justifyContent: "flex-start",
             mt: 2,
-            mb: 5,
+            mb: 2,
             gap: 2,
           }}
         >
@@ -855,6 +1066,10 @@ const New_Invoice = () => {
                     <Autocomplete
                       key={fieldName}
                       options={productData}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          addAnotherProduct();
+                        }}}
                       value={
                         newRow.name
                           ? productData.find(
@@ -900,6 +1115,10 @@ const New_Invoice = () => {
                   <TextField
                     key={fieldName}
                     color="secondary"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        addAnotherProduct();
+                      }}}
                     label={
                       fieldName === "tax"
                         ? `${
@@ -942,37 +1161,6 @@ const New_Invoice = () => {
             }
             return null;
           })}
-        </Box>
-
-        <Box
-          m="20px 0 0 0"
-          sx={{
-            "& .MuiDataGrid-root": {
-              border: "none",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "none",
-            },
-            "& .name-column--cell": {
-              color: colors.greenAccent[300],
-            },
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: colors.blueAccent[700],
-              borderBottom: "none",
-            },
-            "& .MuiDataGrid-virtualScroller": {
-              backgroundColor: colors.primary[400],
-            },
-            "& .MuiDataGrid-footerContainer": {
-              borderTop: "none",
-              backgroundColor: colors.blueAccent[700],
-            },
-            "& .MuiCheckbox-root": {
-              color: `${colors.greenAccent[200]} !important`,
-            },
-          }}
-        >
-          <DataGrid autoHeight hideFooter rows={gridRows} columns={columns} />
         </Box>
         <Box display="flex" justifyContent="space-between" py={1}>
           <Button
@@ -1073,6 +1261,47 @@ const New_Invoice = () => {
               setFooterNotes(event.target.value);
             }}
           />
+            <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "10px",
+            }}
+          >
+            <LoadingButton
+              loading={printLoading}
+              loadingPosition="end"
+              endIcon={<FileCopyOutlinedIcon />}
+              variant="contained"
+              onClick={printInvoice}
+              sx={{
+                textTransform: "capitalize",
+                color: colors.grey[100],
+                backgroundColor: colors.blueAccent[700],
+                "&:hover": {
+                  backgroundColor: colors.blueAccent[600],
+                },
+              }}
+            >
+              Print
+            </LoadingButton>
+            <LoadingButton
+              loading={saveLoading}
+              loadingPosition="end"
+              endIcon={<SaveIcon />}
+              variant="contained"
+              onClick={saveInvoice}
+              sx={{
+                textTransform: "capitalize",
+                color: colors.grey[100],
+                backgroundColor: colors.blueAccent[700],
+                "&:hover": {
+                  backgroundColor: colors.blueAccent[600],
+                },
+              }}
+            >
+              Save
+            </LoadingButton>
             <LoadingButton
               loading={sendLoading}
               loadingPosition="end"
@@ -1091,6 +1320,7 @@ const New_Invoice = () => {
             >
               Send invoice
             </LoadingButton>
+          </Box>
         </Box>
       </Box>
 
