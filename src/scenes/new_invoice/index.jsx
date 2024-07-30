@@ -746,7 +746,7 @@ const New_Invoice = () => {
           const userData = response.data.defaultData;
           // console.log(userData);
           setFooterNotes(userData.footerNotes);
-          setNotes(userData.notes);
+          setNotes(userData.invoiceNotes);
           setPaymentInstructions(userData.paymentInstructions);
           setMsgDisplayed(true);
         } else {

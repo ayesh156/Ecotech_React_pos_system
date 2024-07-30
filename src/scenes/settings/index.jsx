@@ -47,7 +47,8 @@ const Settings = () => {
   const [toastMsg, setToastMsg] = useState("");
   const [toastMsg2, setToastMsg2] = useState("");
   const [initialValuesSet, setInitialValuesSet] = useState(false);
-  const [notes, setNotes] = useState("");
+  const [estimateNotes, setEstimateNotes] = useState("");
+  const [invoiceNotes, setInvoiceNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("");
   const [footerNotes, setFooterNotes] = useState("");
   const [initialValues, setInitialValues] = useState({
@@ -72,7 +73,8 @@ const Settings = () => {
           setInitialValues(userData);
           setFooterNotes(userData.footerNotes);
           setPaymentInstructions(userData.paymentInstructions);
-          setNotes(userData.notes);
+          setEstimateNotes(userData.estimateNotes);
+          setInvoiceNotes(userData.invoiceNotes);
           setSelectedImage(
             userData.image === "" ? userData.image : "../../" + userData.image
           );
@@ -122,8 +124,8 @@ const Settings = () => {
   }, [setResultFound, toastDisplayed, toastMsg, theme.palette.mode]);
 
   const saveSettings = (values, { resetForm }) => {
-    const updatedValues = { ...values, notes, paymentInstructions, footerNotes, image: selectedImage };
-    // console.log(updatedValues);
+    const updatedValues = { ...values, invoiceNotes, estimateNotes, paymentInstructions, footerNotes, image: selectedImage };
+    console.log(updatedValues);
     setIsLoading(true);
     axios
       .put(`${BASE_URL}/system-api/settings?email=${U_EMAIL}`, updatedValues)
@@ -372,15 +374,27 @@ const Settings = () => {
                 }}
               />
               <TextField
-                label="Notes"
+                label="Invoice Notes"
                 multiline
                 rows={4}
                 fullWidth
                 color="secondary"
                 onChange={(event) => {
-                  setNotes(event.target.value);
+                  setInvoiceNotes(event.target.value);
                 }}
-                value={notes}
+                value={invoiceNotes}
+                sx={{ gridColumn: "span 4", }}
+              />
+              <TextField
+                label="Estimate Notes"
+                multiline
+                rows={4}
+                fullWidth
+                color="secondary"
+                onChange={(event) => {
+                  setEstimateNotes(event.target.value);
+                }}
+                value={estimateNotes}
                 sx={{ gridColumn: "span 4", }}
               />
               <TextField

@@ -748,7 +748,7 @@ const New_Estimate = () => {
           const userData = response.data.defaultData;
           // console.log(userData);
           setFooterNotes(userData.footerNotes);
-          setNotes(userData.notes);
+          setNotes(userData.estimateNotes);
           setPaymentInstructions(userData.paymentInstructions);
           setMsgDisplayed(true);
         } else {
