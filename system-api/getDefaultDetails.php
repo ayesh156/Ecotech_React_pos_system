@@ -30,7 +30,8 @@ switch ($method) {
                 if ($row) {
                     $defaultData = [
                         'footerNotes' => $row['footer'],
-                        'notes' => $row['notes'],
+                        'estimateNotes' => $row['estimate_notes'],
+                        'invoiceNotes' => $row['invoice_notes'],
                         'paymentInstructions' => $row['instruction'],
                     ];
                 }

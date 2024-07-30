@@ -29,7 +29,8 @@ switch ($method) {
                         'address' => $row['company_address'],
                         'contact' => $row['company_mobile'],
                         'footerNotes' => $row['footer'],
-                        'notes' => $row['notes'],
+                        'invoiceNotes' => $row['invoice_notes'],
+                        'estimateNotes' => $row['estimate_notes'],
                         'paymentInstructions' => $row['instruction'],
                         'image' => $row['company_image']
                     ];
@@ -63,7 +64,6 @@ switch ($method) {
             $address = $data->address;
             $com_contact = $data->contact;
             $footer_notes = $data->footerNotes;
-            $notes = $data->notes;
             $p_instructions = $data->paymentInstructions;
             $base64Image = $data->image ?? null;
 
@@ -85,12 +85,25 @@ switch ($method) {
                     }
                 }
 
-                $sql_update = "UPDATE user SET company_name='$name', company_email='$com_email', company_address='$address', company_mobile='$com_contact', company_image='$uploadedImagePath', footer='$footer_notes', notes='$notes', instruction='$p_instructions' WHERE email='$email'";
-                $status_update = Database::iud($sql_update);
+                $sql_update = "UPDATE user SET company_name='$name', company_email='$com_email', company_address='$address', company_mobile='$com_contact', company_image='$uploadedImagePath', footer='$footer_notes', instruction='$p_instructions'";
 
-                $response = $status_update ? 
-                    ['status' => 1, 'message' => 'Record updated successfully.'] : 
-                    ['status' => 0, 'message' => 'Failed to update record.'];
+            if (isset($data->estimateNotes)) {
+                $estimate_notes = $data->estimateNotes;
+                $sql_update .= ", estimate_notes='$estimate_notes'";
+            }
+
+            if (isset($data->invoiceNotes)) {
+                $invoice_notes = $data->invoiceNotes;
+                $sql_update .= ", invoice_notes='$invoice_notes'";
+            }
+
+            $sql_update .= " WHERE email='$email'";
+            $status_update = Database::iud($sql_update);
+
+            $response = $status_update ? 
+                ['status' => 1, 'message' => 'Record updated successfully.'] : 
+                ['status' => 0, 'message' => 'Failed to update record.'];
+
             } else {
                 $response = ['status' => 0, 'message' => 'User not found.'];
             }
